@@ -6,6 +6,8 @@ Parlino helps language learners build confidence through short, level-aware spea
 
 The selected Android launcher mark is concept 3 in `images/`; concepts 1 and 2 are preserved as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
 
+https://console.firebase.google.com/project/parlino-1/overview
+
 ## #BuildHybridAI 2026
 
 Parlino is being built for the **Android** track of [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/). The product focuses on a practical language-learning problem: learners often know vocabulary but have few low-pressure chances to say it out loud.
@@ -128,7 +130,7 @@ npm run lint
 npx expo-doctor
 ```
 
-The Android prebuild, JS export and native debug APK build have succeeded. The generated development APK is `android/app/build/outputs/apk/debug/app-debug.apk` (all Android ABIs; about 290 MB). It is debug-signed and intended for development, not Play Store distribution, and is excluded from Git. Start Metro with `npm start` when opening the development client. No Android device was connected, so installation and runtime behavior have not been device-tested.
+The standalone Android test APK built successfully, was installed on a Pixel 8, and launched without a native crash. It is `android/app/build/outputs/apk/release/app-release.apk` (all Android ABIs; about 103 MB), embeds the JavaScript bundle, and does not need Metro. It uses the App Check debug provider and is for private testing only; it is excluded from Git. A successful Firebase AI conversation still requires AI Logic to be enabled in the correct project and this device's debug token to be allow-listed.
 
 Other known limitations: Firebase AI Logic Live is Preview; the Live model must be rechecked before demos; anonymous accounts are not linked to a durable sign-in method; and the hybrid on-device/cloud inference feature required by the challenge is not implemented yet.
 
@@ -141,3 +143,17 @@ Other known limitations: Firebase AI Logic Live is Preview; the Live model must 
 - [React Native Firebase App Check](https://rnfirebase.io/app-check/usage)
 - [Expo Audio](https://docs.expo.dev/versions/latest/sdk/audio/)
 - [Expo development builds](https://docs.expo.dev/develop/development-builds/introduction/)
+
+## Pixel 8 screenshots
+
+Captured from the installed Android standalone test build. The voice screen is shown before starting a session.
+
+<p align="center">
+  <img src="images/parlino-home.png" alt="Parlino practice home with conversation scenarios" width="240" />
+  <img src="images/parlino-review.png" alt="Parlino phrase review empty state" width="240" />
+</p>
+
+<p align="center">
+  <img src="images/parlino-settings.png" alt="Parlino privacy and Firebase settings" width="240" />
+  <img src="images/parlino-voice-practice.png" alt="Parlino café voice practice ready screen" width="240" />
+</p>
