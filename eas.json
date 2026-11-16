@@ -5,7 +5,7 @@
     "standalone-test": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "PARLINO_APPCHECK_DEBUG": "true" }
+      "env": { "EXPO_PUBLIC_APP_CHECK_DEBUG": "true" }
     },
     "preview": { "distribution": "internal" },
     "production": {}

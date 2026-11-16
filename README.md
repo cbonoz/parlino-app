@@ -72,11 +72,10 @@ npx eas-cli build --platform android --profile development
 
 The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or this computer running. It explicitly uses the App Check **debug provider** for private device testing; register that device's generated token in Firebase Console before calling AI Logic. Never distribute this build publicly. Firebase calls still require internet access.
 
-For a local build, set the flag during both prebuild and bundling:
+For a local build, set the public build-time flag while Metro bundles the release JavaScript:
 
 ```sh
-PARLINO_APPCHECK_DEBUG=true npx expo prebuild --no-install
-JAVA_HOME=/path/to/jdk-17 ANDROID_HOME="$HOME/Library/Android/sdk" PARLINO_APPCHECK_DEBUG=true ./android/gradlew -p android assembleRelease
+JAVA_HOME=/path/to/jdk-17 ANDROID_HOME="$HOME/Library/Android/sdk" EXPO_PUBLIC_APP_CHECK_DEBUG=true ./android/gradlew -p android assembleRelease
 ```
 
 The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. Alternatively, run `npx eas-cli build --platform android --profile standalone-test`.
