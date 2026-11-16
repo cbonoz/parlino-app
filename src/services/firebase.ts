@@ -1,4 +1,5 @@
 import { getApp, getApps } from '@react-native-firebase/app';
+import Constants from 'expo-constants';
 import {
   ReactNativeFirebaseAppCheckProvider,
   initializeAppCheck,
@@ -26,8 +27,9 @@ export function getFirebaseSetup(): FirebaseSetup {
 export function prepareAppCheck(): void {
   if (appCheckInitialized || !getFirebaseSetup().ready) return;
   const provider = new ReactNativeFirebaseAppCheckProvider();
+  const useDebugProvider = __DEV__ || Constants.expoConfig?.extra?.appCheckDebug === true;
   provider.configure({
-    android: { provider: __DEV__ ? 'debug' : 'playIntegrity' },
+    android: { provider: useDebugProvider ? 'debug' : 'playIntegrity' },
   });
   initializeAppCheck(getApp(), { provider, isTokenAutoRefreshEnabled: true });
   appCheckInitialized = true;

@@ -2,6 +2,11 @@
   "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
   "build": {
     "development": { "developmentClient": true, "distribution": "internal" },
+    "standalone-test": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": { "PARLINO_APPCHECK_DEBUG": "true" }
+    },
     "preview": { "distribution": "internal" },
     "production": {}
   }

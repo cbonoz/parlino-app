@@ -35,6 +35,9 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  extra: {
+    appCheckDebug: process.env.PARLINO_APPCHECK_DEBUG === 'true',
+  },
   experiments: { typedRoutes: true },
 };
 
