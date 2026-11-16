@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Card, Eyebrow, PrimaryButton, Screen, Tag } from '@/components/ui';
 import { DEFAULT_SETTINGS, type LearnerSettings, type Proficiency } from '@/domain/types';
 import { saveSettings } from '@/services/progress';
@@ -35,7 +35,7 @@ export default function OnboardingScreen() {
   return (
     <Screen>
       <KeyboardAvoidingView style={{ gap: 22 }}>
-        <View style={styles.brandRow}><View style={styles.brandMark}><Text style={styles.brandMarkText}>p</Text></View><Text style={styles.brand}>PARLINO</Text><Text style={styles.step}>01 / 01</Text></View>
+        <View style={styles.brandRow}><View style={styles.brandMark}><Image source={require('../images/parlino-app-icon.png')} style={styles.brandImage} /></View><Text style={styles.brand}>PARLINO</Text><Text style={styles.step}>01 / 01</Text></View>
         <View style={{ gap: 10 }}>
           <Eyebrow>Your AI partner for speaking a new language</Eyebrow>
           <Text style={styles.title}>Let’s make this{ '\n' }feel like <Text style={styles.titleAccent}>your language.</Text></Text>
@@ -78,8 +78,8 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 7 },
-  brandMark: { height: 30, width: 30, borderRadius: 10, backgroundColor: colors.deepGreen, alignItems: 'center', justifyContent: 'center' },
-  brandMarkText: { color: colors.lime, fontFamily: 'Georgia', fontSize: 23, fontStyle: 'italic', fontWeight: '700', marginTop: -2 },
+  brandMark: { height: 30, width: 30, borderRadius: 10, backgroundColor: colors.canvas, overflow: 'hidden' },
+  brandImage: { height: 30, width: 30 },
   brand: { color: colors.ink, fontWeight: '800', fontSize: 10, letterSpacing: 1.6, flex: 1 },
   step: { color: colors.muted, fontSize: 11, fontWeight: '600' },
   title: { color: colors.ink, fontSize: 38, lineHeight: 44, letterSpacing: -1.8, fontWeight: '700' },

@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Eyebrow, Screen } from '@/components/ui';
 import { SCENARIOS, type LearnerSettings, type SavedPhrase, type SessionRecord } from '@/domain/types';
 import { loadSavedPhrases, loadSessions, loadSettings } from '@/services/progress';
@@ -29,7 +29,7 @@ export default function HomeScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <View style={styles.brandRow}><View style={styles.brandMark}><Text style={styles.brandMarkText}>p</Text></View><Text style={styles.brand}>PARLINO</Text></View>
+        <View style={styles.brandRow}><View style={styles.brandMark}><Image source={require('../../images/parlino-app-icon.png')} style={styles.brandImage} /></View><Text style={styles.brand}>PARLINO</Text></View>
         <Pressable accessibilityRole="button" accessibilityLabel="Open settings" onPress={() => router.push('/(tabs)/settings')} style={styles.avatar}><Text style={styles.avatarText}>↗</Text></Pressable>
       </View>
 
@@ -86,8 +86,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  brandMark: { height: 29, width: 29, borderRadius: 10, backgroundColor: colors.deepGreen, alignItems: 'center', justifyContent: 'center' },
-  brandMarkText: { color: colors.lime, fontFamily: 'Georgia', fontSize: 22, fontStyle: 'italic', fontWeight: '700', marginTop: -2 },
+  brandMark: { height: 29, width: 29, borderRadius: 10, backgroundColor: colors.canvas, overflow: 'hidden' },
+  brandImage: { height: 29, width: 29 },
   brand: { color: colors.ink, fontWeight: '800', fontSize: 10, letterSpacing: 1.5 },
   avatar: { height: 38, width: 38, borderRadius: 19, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: colors.deepGreen, fontSize: 18 },

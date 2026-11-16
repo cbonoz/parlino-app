@@ -10,12 +10,18 @@ const config: ExpoConfig = {
   slug: 'parlino',
   scheme: 'parlino',
   version: '1.0.0',
+  icon: './images/parlino-app-icon.png',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   platforms: ['android'],
   android: {
     ...(existsSync(googleServicesJson) ? { googleServicesFile: './google-services.json' } : {}),
     package: 'com.parlino.app',
+    adaptiveIcon: {
+      foregroundImage: './images/parlino-adaptive-foreground.png',
+      monochromeImage: './images/parlino-adaptive-monochrome.png',
+      backgroundColor: '#F7F7F2',
+    },
   },
   plugins: [
     'expo-router',

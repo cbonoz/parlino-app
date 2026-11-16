@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Parlino logo concept 1 — Conversation mark</title>
+  <desc id="desc">A forest-green speech bubble with three ivory listening dots and a lime accent bubble on a warm ivory tile.</desc>
+  <rect width="512" height="512" rx="112" fill="#F7F7F2"/>
+  <path d="M111 171c0-39 32-71 71-71h148c39 0 71 32 71 71v111c0 39-32 71-71 71H230l-82 55 20-57c-34-7-57-36-57-69V171Z" fill="#15543D"/>
+  <circle cx="192" cy="228" r="13" fill="#F7F7F2"/>
+  <circle cx="256" cy="228" r="13" fill="#F7F7F2"/>
+  <circle cx="320" cy="228" r="13" fill="#D4F06B"/>
+  <circle cx="374" cy="130" r="31" fill="#D4F06B"/>
+</svg>

@@ -4,6 +4,8 @@
 
 Parlino helps language learners build confidence through short, level-aware speaking practice: choose a real-life scenario, talk with an AI tutor, then keep a few useful phrases for review.
 
+The selected Android launcher mark is concept 3 in `images/`; concepts 1 and 2 are preserved as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
+
 ## #BuildHybridAI 2026
 
 Parlino is being built for the **Android** track of [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/). The product focuses on a practical language-learning problem: learners often know vocabulary but have few low-pressure chances to say it out loud.
