@@ -47,6 +47,8 @@ export type SessionRecord = {
   scenarioTitle: string;
   startedAt: number;
   durationSeconds: number;
+  learnerTurnCount?: number;
+  tutorTurnCount?: number;
   summary?: SessionRecap | null;
   transcript?: TranscriptTurn[];
 };

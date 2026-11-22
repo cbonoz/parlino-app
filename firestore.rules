@@ -15,7 +15,8 @@ service cloud.firestore {
         allow read, delete: if owns(uid);
         allow create, update: if owns(uid)
           && request.resource.data.keys().hasOnly([
-            'scenarioId', 'scenarioTitle', 'startedAt', 'durationSeconds', 'summary', 'transcript'
+            'scenarioId', 'scenarioTitle', 'startedAt', 'durationSeconds',
+            'learnerTurnCount', 'tutorTurnCount', 'summary', 'transcript'
           ]);
       }
       match /savedPhrases/{phraseId} {

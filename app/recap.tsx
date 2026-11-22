@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Eyebrow, PrimaryButton, Screen } from '@/components/ui';
 import { nextReviewAt } from '@/domain/reviewSchedule';
+import { countSessionTurns } from '@/domain/sessionStats';
 import type { LearnerSettings, RecapPhrase, SavedPhrase, SessionRecap, SessionRecord } from '@/domain/types';
 import { createSessionRecap } from '@/services/recapService';
 import { loadSettings, savePhrase, saveSessionLocally, syncSession } from '@/services/progress';
@@ -36,6 +37,7 @@ export default function RecapScreen() {
       scenarioTitle: source.scenario.title,
       startedAt: source.startedAt,
       durationSeconds: source.durationSeconds,
+      ...countSessionTurns(source.turns),
       summary: null,
       ...(learnerSettings.saveTranscripts ? { transcript: source.turns } : {}),
     };

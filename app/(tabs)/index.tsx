@@ -73,6 +73,7 @@ export default function HomeScreen() {
         <Card style={styles.progressCard}><Text style={styles.metric}>{loading ? '—' : phrases.length}</Text><Text style={styles.metricLabel}>saved phrases</Text></Card>
         <Card style={styles.progressCard}><Text style={styles.metric}>{loading ? '—' : `${Math.round(sessions.reduce((sum, session) => sum + session.durationSeconds, 0) / 60)}m`}</Text><Text style={styles.metricLabel}>speaking time</Text></Card>
       </View>
+      {!loading && sessions.length > 0 ? <Text style={styles.progressNote}>{sessions.reduce((sum, session) => sum + (session.learnerTurnCount ?? 0), 0)} learner turns practiced</Text> : null}
       {phrases[0] ? <View style={{ gap: 10 }}>
         <View style={styles.sectionHead}><Text style={styles.sectionTitle}>A phrase to keep close</Text><Pressable onPress={() => router.push('/(tabs)/review')}><Text style={styles.textLink}>Review all →</Text></Pressable></View>
         <Card style={styles.savedPhraseCard}><Text style={styles.savedPhraseEyebrow}>SAVED FROM A CONVERSATION</Text><Text style={styles.savedPhrase}>{phrases[0].phrase}</Text><Text style={styles.savedTranslation}>{phrases[0].translation}</Text></Card>
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
   scenarioArrow: { color: '#A2B0A7', fontSize: 18, paddingHorizontal: 3 },
   progressRow: { flexDirection: 'row', gap: 8 },
   progressCard: { flex: 1, padding: 12, paddingVertical: 14, borderRadius: 17, alignItems: 'center', justifyContent: 'center', minHeight: 77 },
+  progressNote: { color: colors.muted, fontSize: 10, marginTop: -8 },
   metric: { color: colors.deepGreen, fontSize: 22, fontWeight: '700' },
   metricLabel: { color: colors.muted, fontSize: 9, marginTop: 3, textAlign: 'center' },
   savedPhraseCard: { padding: 16, gap: 6, borderColor: '#D9E9DF' },

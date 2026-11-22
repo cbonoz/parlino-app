@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SCENARIOS, type LearnerSettings, type TranscriptTurn } from '@/domain/types';
+import { countSessionTurns } from '@/domain/sessionStats';
 import { LiveAudioPlayer, toMonoPcm16kBase64 } from '@/services/audio';
 import { connectLiveConversation, type LiveConversation, type LiveState } from '@/services/aiSession';
 import { loadSettings, saveSessionLocally } from '@/services/progress';
@@ -137,11 +138,15 @@ export default function ConversationScreen() {
     connectionRef.current = null;
     await playerRef.current?.stop().catch(() => undefined);
     playerRef.current = null;
+    const endedAt = Date.now();
+    const startedAt = startedAtRef.current || endedAt;
+    const durationSeconds = Math.max(0, Math.floor((endedAt - startedAt) / 1000));
+    const turnStats = countSessionTurns(turnsRef.current);
     const draft = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       scenario,
-      startedAt: startedAtRef.current || Date.now(),
-      durationSeconds: elapsed,
+      startedAt,
+      durationSeconds,
       turns: turnsRef.current,
     };
     setSessionDraft(draft);
@@ -152,6 +157,7 @@ export default function ConversationScreen() {
         scenarioTitle: scenario.title,
         startedAt: draft.startedAt,
         durationSeconds: draft.durationSeconds,
+        ...turnStats,
         summary: null,
         ...(settings?.saveTranscripts ? { transcript: draft.turns } : {}),
       });
