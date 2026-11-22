@@ -1,10 +1,12 @@
 import { getApp, getApps } from '@react-native-firebase/app';
+import Constants from 'expo-constants';
 import {
   ReactNativeFirebaseAppCheckProvider,
   initializeAppCheck,
+  type AppCheck,
 } from '@react-native-firebase/app-check';
 
-let appCheckInitialized = false;
+let appCheckInstance: AppCheck | undefined;
 
 export type FirebaseSetup = { ready: boolean; message: string };
 
@@ -23,13 +25,23 @@ export function getFirebaseSetup(): FirebaseSetup {
   }
 }
 
-export function prepareAppCheck(): void {
-  if (appCheckInitialized || !getFirebaseSetup().ready) return;
+export function prepareAppCheck(): AppCheck {
+  if (appCheckInstance) return appCheckInstance;
+  if (!getFirebaseSetup().ready) {
+    throw new Error('Firebase is not configured for App Check.');
+  }
+
   const provider = new ReactNativeFirebaseAppCheckProvider();
-  const useDebugProvider = __DEV__ || process.env.EXPO_PUBLIC_APP_CHECK_DEBUG === 'true';
+  const useDebugProvider =
+    __DEV__ ||
+    process.env.EXPO_PUBLIC_APP_CHECK_DEBUG === 'true' ||
+    Constants.expoConfig?.extra?.appCheckProvider === 'debug';
+  if (useDebugProvider) {
+    console.info('[AppCheck] Debug provider enabled for this test build.');
+  }
   provider.configure({
     android: { provider: useDebugProvider ? 'debug' : 'playIntegrity' },
   });
-  initializeAppCheck(getApp(), { provider, isTokenAutoRefreshEnabled: true });
-  appCheckInitialized = true;
+  appCheckInstance = initializeAppCheck(getApp(), { provider, isTokenAutoRefreshEnabled: true });
+  return appCheckInstance;
 }

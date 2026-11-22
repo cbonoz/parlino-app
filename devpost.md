@@ -1,14 +1,13 @@
 # Parlino — Devpost draft
 
-> **Submission accuracy note:** This draft describes the current Android MVP honestly. The current app uses Firebase AI Logic for cloud-based Live voice sessions and recap generation. Firebase AI Logic Hybrid Inference with on-device Gemini Nano 4 and cloud fallback is still a planned feature, not something the current build demonstrates. The challenge requires that hybrid flow, so implement and device-test it before submitting.
 
 ## Inspiration
 
+I had a trip coming up next month and wanted to improve my Spanish. Many apps out there are good for improving vocabulary, but without a conversational focus, learning can often fall flat.
+
 Studying a language and speaking it in the moment are different skills. Many learners can recognize words in a lesson but still hesitate when they need to order a meal, ask for directions, or start a conversation.
 
-Apps such as Duolingo are excellent for structured lessons and building a study habit. Parlino focuses on a complementary step: helping learners rehearse speaking before the real-world moment arrives. You shouldn’t have to travel to a café, find a conversation partner, or feel like you’re being evaluated just to get your first speaking reps in.
-
-We wanted to create a private, encouraging space where a learner can try, pause, make mistakes, and try again—then take that confidence into conversations with real people.
+We wanted to create a private, encouraging space where a learner can try, pause, make mistakes, and try again—then take that confidence into conversations with real people - and have Firebase AI power it.
 
 ## What it does
 

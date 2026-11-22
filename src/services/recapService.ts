@@ -10,8 +10,7 @@ export async function createSessionRecap(
 ): Promise<SessionRecap> {
   if (!getFirebaseSetup().ready) throw new Error('Connect Firebase AI Logic to create a session recap.');
   if (turns.length === 0) throw new Error('There is no transcript to recap yet.');
-  prepareAppCheck();
-  const model = getGenerativeModel(getAI(getApp()), {
+  const model = getGenerativeModel(getAI(getApp(), { appCheck: prepareAppCheck() }), {
     model: 'gemini-3.8-flash',
     generationConfig: { responseMimeType: 'application/json' },
   });

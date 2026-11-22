@@ -35,6 +35,9 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  extra: {
+    appCheckProvider: process.env.PARLINO_APP_CHECK_PROVIDER === 'debug' ? 'debug' : 'playIntegrity',
+  },
   experiments: { typedRoutes: true },
 };
 

@@ -1,0 +1,105 @@
+diff --git a/node_modules/@react-native-firebase/ai/dist/module/methods/live-session.js b/node_modules/@react-native-firebase/ai/dist/module/methods/live-session.js
+index 40fb789..026db0f 100644
+--- a/node_modules/@react-native-firebase/ai/dist/module/methods/live-session.js
++++ b/node_modules/@react-native-firebase/ai/dist/module/methods/live-session.js
+@@ -76,7 +76,11 @@ export class LiveSession {
+   async _connectSession(sessionResumption) {
+     const url = new WebSocketUrl(this._apiSettings);
+     try {
+-      await this._webSocketHandler.connect(url.toString());
++      const appCheckToken = this._apiSettings.getAppCheckToken ? await this._apiSettings.getAppCheckToken() : undefined;
++      const headers = appCheckToken?.token ? {
++        'X-Firebase-AppCheck': appCheckToken.token
++      } : undefined;
++      await this._webSocketHandler.connect(url.toString(), headers);
+       this._serverMessages = this._webSocketHandler.listen();
+       const setupMessage = {
+         ...this._setupMessage,
+diff --git a/node_modules/@react-native-firebase/ai/dist/module/websocket.js b/node_modules/@react-native-firebase/ai/dist/module/websocket.js
+index 0489c97..518d970 100644
+--- a/node_modules/@react-native-firebase/ai/dist/module/websocket.js
++++ b/node_modules/@react-native-firebase/ai/dist/module/websocket.js
+@@ -40,9 +40,16 @@ export class WebSocketHandlerImpl {
+       throw new AIError(AIErrorCode.UNSUPPORTED, 'The WebSocket API is not available in this environment. ' + 'The "Live" feature is not supported here. It is supported in ' + 'modern browser windows, Web Workers with WebSocket support, and Node >= 22.');
+     }
+   }
+-  connect(url) {
++  connect(url, headers) {
+     return new Promise((resolve, reject) => {
+-      this.ws = new WebSocket(url);
++      const isReactNative = typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
++      if (isReactNative && headers) {
++        this.ws = new WebSocket(url, undefined, {
++          headers
++        });
++      } else {
++        this.ws = new WebSocket(url);
++      }
+       // Note: binaryType is not supported in React Native's WebSocket implementation.
+       // We handle ArrayBuffer, Blob, and string data types in the message listener instead.
+ 
+diff --git a/node_modules/@react-native-firebase/ai/dist/typescript/lib/websocket.d.ts b/node_modules/@react-native-firebase/ai/dist/typescript/lib/websocket.d.ts
+index a981e31..6858b7f 100644
+--- a/node_modules/@react-native-firebase/ai/dist/typescript/lib/websocket.d.ts
++++ b/node_modules/@react-native-firebase/ai/dist/typescript/lib/websocket.d.ts
+@@ -28,7 +28,7 @@ export interface WebSocketHandler {
+      * @param url The WebSocket URL (e.g., wss://...).
+      * @returns A promise that resolves on successful connection or rejects on failure.
+      */
+-    connect(url: string): Promise<void>;
++    connect(url: string, headers?: Record<string, string>): Promise<void>;
+     /**
+      * Sends data over the WebSocket.
+      *
+diff --git a/node_modules/@react-native-firebase/ai/lib/methods/live-session.ts b/node_modules/@react-native-firebase/ai/lib/methods/live-session.ts
+index cc4b179..a78009a 100644
+--- a/node_modules/@react-native-firebase/ai/lib/methods/live-session.ts
++++ b/node_modules/@react-native-firebase/ai/lib/methods/live-session.ts
+@@ -95,7 +95,11 @@ export class LiveSession {
+   async _connectSession(sessionResumption?: SessionResumptionConfig): Promise<void> {
+     const url = new WebSocketUrl(this._apiSettings);
+     try {
+-      await this._webSocketHandler!.connect(url.toString());
++      const appCheckToken = await this._apiSettings.getAppCheckToken?.();
++      const headers = appCheckToken?.token
++        ? { 'X-Firebase-AppCheck': appCheckToken.token }
++        : undefined;
++      await this._webSocketHandler!.connect(url.toString(), headers);
+       this._serverMessages = this._webSocketHandler!.listen();
+       const setupMessage = {
+         ...this._setupMessage,
+diff --git a/node_modules/@react-native-firebase/ai/lib/websocket.ts b/node_modules/@react-native-firebase/ai/lib/websocket.ts
+index fddbe06..7b291cf 100644
+--- a/node_modules/@react-native-firebase/ai/lib/websocket.ts
++++ b/node_modules/@react-native-firebase/ai/lib/websocket.ts
+@@ -34,7 +34,7 @@ export interface WebSocketHandler {
+    * @param url The WebSocket URL (e.g., wss://...).
+    * @returns A promise that resolves on successful connection or rejects on failure.
+    */
+-  connect(url: string): Promise<void>;
++  connect(url: string, headers?: Record<string, string>): Promise<void>;
+ 
+   /**
+    * Sends data over the WebSocket.
+@@ -81,9 +81,19 @@ export class WebSocketHandlerImpl implements WebSocketHandler {
+     }
+   }
+ 
+-  connect(url: string): Promise<void> {
++  connect(url: string, headers?: Record<string, string>): Promise<void> {
+     return new Promise((resolve, reject) => {
+-      this.ws = new WebSocket(url);
++      const isReactNative = typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
++      if (isReactNative && headers) {
++        const ReactNativeWebSocket = WebSocket as unknown as new (
++          url: string,
++          protocols?: string | string[],
++          options?: { headers: Record<string, string> },
++        ) => WebSocket;
++        this.ws = new ReactNativeWebSocket(url, undefined, { headers });
++      } else {
++        this.ws = new WebSocket(url);
++      }
+       // Note: binaryType is not supported in React Native's WebSocket implementation.
+       // We handle ArrayBuffer, Blob, and string data types in the message listener instead.
+ 

@@ -4,6 +4,7 @@ import type { AudioStreamBuffer } from 'expo-audio';
 
 const INPUT_SAMPLE_RATE = 16_000;
 const OUTPUT_SAMPLE_RATE = 24_000;
+const OUTPUT_ECHO_GUARD_SECONDS = 0.25;
 
 export function toMonoPcm16kBase64(buffer: AudioStreamBuffer): string {
   const input = buffer.data;
@@ -38,6 +39,12 @@ export function toMonoPcm16kBase64(buffer: AudioStreamBuffer): string {
 export class LiveAudioPlayer {
   private readonly context = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
   private nextStartTime = 0;
+
+  get isPlaying(): boolean {
+    return this.context.state === 'running' &&
+      this.nextStartTime > 0 &&
+      this.context.currentTime < this.nextStartTime + OUTPUT_ECHO_GUARD_SECONDS;
+  }
 
   async play(base64Pcm: string, sampleRate = OUTPUT_SAMPLE_RATE): Promise<void> {
     const bytes = toByteArray(base64Pcm);

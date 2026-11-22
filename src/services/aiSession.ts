@@ -26,9 +26,8 @@ export async function connectLiveConversation(
 ): Promise<LiveConversation> {
   const setup = getFirebaseSetup();
   if (!setup.ready) throw new Error(setup.message);
-  prepareAppCheck();
   const tutorInstruction = buildTutorInstruction({ settings, scenario, realTimeCorrections });
-  const model = getLiveGenerativeModel(getAI(getApp()), {
+  const model = getLiveGenerativeModel(getAI(getApp(), { appCheck: prepareAppCheck() }), {
     // The RNFirebase Live API guide currently documents this native-audio Live model.
     model: 'gemini-2.5-flash-native-audio-preview-12-2025',
     generationConfig: {
@@ -80,7 +79,7 @@ export async function connectLiveConversation(
       );
     },
     sendAudio(base64Pcm) {
-      sendQueue = sendQueue.then(() => session.sendAudioRealtime({ mimeType: 'audio/pcm;rate=16000', data: base64Pcm }));
+      sendQueue = sendQueue.then(() => session.sendAudioRealtime({ mimeType: 'audio/pcm', data: base64Pcm }));
       return sendQueue;
     },
     async close() {

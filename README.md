@@ -30,11 +30,11 @@ A promising next step is to add a hybrid text-practice feature—such as generat
 
 Firebase is the app's AI and progress backend—not just a listed dependency:
 
-- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The currently configured Live model is `gemini-2.5-flash-native-audio-preview-12-2025`; verify its availability before a judging/demo build because Live is a Preview product and model availability can change.
+- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. Microphone chunks are sent only while the tutor is listening, with an echo guard while tutor audio plays. `patches/@react-native-firebase+ai+27.1.1.patch` adds the App Check header to React Native's Live WebSocket handshake; `npm ci` applies this patch through `postinstall`. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The currently configured Live model is `gemini-2.5-flash-native-audio-preview-12-2025`; verify its availability before a judging/demo build because Live is a Preview product and model availability can change.
 - **Firebase AI Logic — recap** (`src/services/recapService.ts`): calls `getGenerativeModel` with `gemini-3.8-flash` to turn the session transcript into a structured recap. The result is validated by `src/domain/recap.ts` before it is displayed or saved.
 - **Firebase Authentication** (`src/services/auth.ts`): anonymous sign-in gives each guest a Firebase UID without requiring account creation before practice.
 - **Cloud Firestore** (`src/services/progress.ts`): stores learner settings, session summaries and saved phrases under `users/{uid}`. Transcript saving is opt-in and off by default. `firestore.rules` enforces per-user ownership.
-- **Firebase App Check** (`src/services/firebase.ts`): debug provider in development, Play Integrity in production. AI Logic App Check enforcement is required; register the development token in Firebase Console and never ship a debug token.
+- **Firebase App Check** (`src/services/firebase.ts`): debug provider for development and private sideloaded builds; Play Integrity is reserved for production distribution through Google Play. AI Logic App Check enforcement stays enabled. Register each test device's debug token in the same Firebase project's Android app entry; never ship or publish a debug token.
 - **Local persistence:** AsyncStorage holds settings/progress for use before Firebase is configured and syncs guest data when Firebase becomes available. This is not a local model or an offline AI fallback.
 
 No provider API key or service-account credential is bundled in the app. The Firebase Android config file is client configuration, is git-ignored, and is not a substitute for server credentials.
@@ -44,21 +44,30 @@ No provider API key or service-account credential is bundled in the app. The Fir
 - `google-services.json`, `.env*`, Firebase CLI logs/cache, service-account key files, `PROMPT.md`, generated Android sources/build products and `dist/` are excluded from Git.
 - `.easignore` intentionally allows the local `google-services.json` into protected EAS build uploads; it remains excluded from the public source repository.
 - The debug APK is a local build artifact and is not committed. Never commit an App Check debug token or Android signing keystore.
+- The tracked `patches/` file is an intentional `patch-package` patch for React Native Firebase AI 27.1.1. `npm ci` applies it automatically; do not remove it unless the dependency is upgraded and the Live WebSocket App Check header behavior is verified.
 
-## Run the Android development build
+## Build and run Android locally (sideloaded; no Play Store)
 
-Expo Go is not supported: React Native Firebase and the audio modules need a native development build.
+Parlino can be built and installed locally without publishing it to Google Play. Expo Go is not supported because React Native Firebase and the audio modules need a native Android build.
 
-The Expo config sets Kotlin Gradle plugin 2.4.0 via `expo-build-properties`, matching the Kotlin metadata used by the resolved Firebase Auth Android dependency.
+### Prerequisites
+
+- A Node.js version supported by Expo SDK 58 (Node 22.13.x, 24.3+, 26.x, or 27+).
+- JDK **17**, Android SDK and Android platform tools (`adb`).
+- A Firebase project and local `google-services.json`; see [Firebase project setup](#firebase-project-setup) below.
+- For voice testing, an Android device with microphone access, internet, and USB debugging enabled.
+
+The Expo config sets Kotlin Gradle plugin 2.4.0 via `expo-build-properties`, matching the Kotlin metadata used by the resolved Firebase Auth Android dependency. `npm ci` also runs `patch-package`, which applies the tracked Live API App Check patch.
+
+### Development build (Metro)
 
 ```sh
-npm install
+npm ci
 npx expo install --check
-npx expo prebuild
 npx expo run:android
 ```
 
-For a connected physical device, use `npx expo run:android --device`. After installing the development client, start Metro with:
+For a connected physical device, use `npx expo run:android --device`. Start Metro with:
 
 ```sh
 npm start
@@ -70,17 +79,39 @@ The EAS development profile is configured in `eas.json`:
 npx eas-cli build --platform android --profile development
 ```
 
-### Standalone Android test APK (no Metro)
+### Standalone test APK (sideloaded, no Metro)
 
-The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or this computer running. It explicitly uses the App Check **debug provider** for private device testing; register that device's generated token in Firebase Console before calling AI Logic. Never distribute this build publicly. Firebase calls still require internet access.
+Use the App Check **debug provider** for a local or sideloaded judging build; a Play Integrity registration alone is not sufficient for an APK installed outside Google Play. The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or the build computer running. Keep this debug build private. Firebase AI calls still require internet access.
 
-For a local build, set the public build-time flag while Metro bundles the release JavaScript:
+After completing Firebase project setup and placing `google-services.json` in the repository root, build locally from macOS/Linux:
 
 ```sh
-JAVA_HOME=/path/to/jdk-17 ANDROID_HOME="$HOME/Library/Android/sdk" EXPO_PUBLIC_APP_CHECK_DEBUG=true ./android/gradlew -p android assembleRelease
+# Point these at your local JDK 17 and Android SDK installations.
+# Common Android SDK paths: macOS $HOME/Library/Android/sdk; Linux $HOME/Android/Sdk.
+export JAVA_HOME="/path/to/jdk-17"
+export ANDROID_HOME="/path/to/android-sdk"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+PARLINO_APP_CHECK_PROVIDER=debug npx expo prebuild --platform android --no-install
+PARLINO_APP_CHECK_PROVIDER=debug EXPO_PUBLIC_APP_CHECK_DEBUG=true \
+  ./android/gradlew -p android assembleRelease
+
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+adb shell monkey -p com.parlino.app 1
 ```
 
-The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. Alternatively, run `npx eas-cli build --platform android --profile standalone-test`.
+The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. To build with EAS instead, run `npx eas-cli build --platform android --profile standalone-test`; the profile sets the debug-provider flags.
+
+Each device needs an App Check debug token registered for the exact Android app in the Firebase project used by that build. To view a token on a test device, start a log stream, then force-stop and reopen Parlino:
+
+```sh
+adb logcat | grep -F "Firebase App Check debug token"
+# In another terminal:
+adb shell am force-stop com.parlino.app
+adb shell monkey -p com.parlino.app 1
+```
+
+Register the displayed token in **Firebase Console → App Check → Apps → Parlino (`com.parlino.app`) → Manage debug tokens**. A judge using their own Firebase project must use that project's `google-services.json` and register their own device token there. If using a shared project, the project owner must add each judge's token privately. **Do not put debug tokens in source control, Devpost, or public issue comments.**
 
 Native dependency or configuration changes require rebuilding. `npx expo prebuild --clean` regenerates the Android native project and overwrites generated native files; inspect any native edits before running it.
 
@@ -90,9 +121,9 @@ Native dependency or configuration changes require rebuilding. `npx expo prebuil
 2. Download its `google-services.json` to the project root. Expo attaches the Firebase config plugins when this file exists and processes the Google Services Gradle plugin during prebuild. The file is git-ignored; `.easignore` includes it in protected EAS uploads without adding it to Git.
 3. Enable **Anonymous** under Authentication providers.
 4. Create a Cloud Firestore database and publish the rules from `firestore.rules`.
-5. In Firebase Console, enable Firebase AI Logic and complete its Gemini provider setup. Confirm App Check enforcement is enabled for AI Logic.
-6. For development, run the app, get the App Check debug token from Android logs, and register it in Firebase Console under **App Check → Apps → Manage debug tokens**. Keep it private. For production, register Android with Play Integrity.
-7. Rebuild the native app after setup:
+5. In Firebase Console, enable Firebase AI Logic and complete its Gemini provider setup. Keep **Basic App Check enforcement enabled** for AI Logic; Replay protection can remain off for this test setup.
+6. Build the local/sideloaded APK with the debug provider as described above, then register each test device's debug token under **App Check → Apps → Manage debug tokens**. Keep tokens private. Play Integrity is for production builds distributed through Google Play, not this sideloaded test APK.
+7. Rebuild the native app after adding or changing Firebase configuration:
 
    ```sh
    npx expo prebuild
@@ -107,6 +138,13 @@ There is no Firebase AI Logic emulator; real model calls require a configured Fi
 - Transcripts are not persisted by default. If **Save session transcripts** is enabled, the transcript is saved with the session. Recaps, session metadata and saved phrases are otherwise the progress data stored in Firestore.
 - Before recap generation, the active transcript is held in memory. If recap generation fails, Parlino does not fabricate recap content.
 - Firestore data is scoped to the authenticated UID. Review `firestore.rules` before changing the schema.
+
+## What's next for Parlino
+
+1. Implement Firebase AI Logic Hybrid Inference on Android: use Gemini Nano 4 for a useful speaking-preparation or phrase-practice feature when available, with cloud fallback when the device or model can't handle the request. **This required hybrid flow is not implemented yet.**
+2. Make the inference route visible and testable so learners and judges can tell when work stays on-device and when it uses the cloud.
+3. Finish physical-device testing of multi-turn Live audio, including the microphone echo guard, plus hybrid behavior on supported, offline, and unsupported devices.
+4. Add the project's open-source license, publish the repository for judging, and record a short Android demo showing the finished hybrid flow.
 
 ## Hackathon submission checklist
 
@@ -130,7 +168,7 @@ npm run lint
 npx expo-doctor
 ```
 
-The standalone Android test APK built successfully, was installed on a Pixel 8, and launched without a native crash. It is `android/app/build/outputs/apk/release/app-release.apk` (all Android ABIs; about 103 MB), embeds the JavaScript bundle, and does not need Metro. It uses the App Check debug provider and is for private testing only; it is excluded from Git. A successful Firebase AI conversation still requires AI Logic to be enabled in the correct project and this device's debug token to be allow-listed.
+The standalone Android APK builds locally, embeds the JavaScript bundle, and can be sideloaded without Play Store or Metro. The current test build uses the debug provider, sends App Check on the Live WebSocket handshake, and only forwards microphone audio while the tutor is listening. Keep the APK private and register the device's debug token in the Firebase project configured in that build. The latest code changes compile and pass the local test, typecheck, and lint suites; finish a full multi-turn physical-device test before treating voice practice as fully verified.
 
 Other known limitations: Firebase AI Logic Live is Preview; the Live model must be rechecked before demos; anonymous accounts are not linked to a durable sign-in method; and the hybrid on-device/cloud inference feature required by the challenge is not implemented yet.
 
@@ -141,8 +179,10 @@ Other known limitations: Firebase AI Logic Live is Preview; the Live model must 
 - [Firebase AI Logic Live API](https://firebase.google.com/docs/ai-logic/live-api)
 - [React Native Firebase AI Logic](https://rnfirebase.io/ai/usage)
 - [React Native Firebase App Check](https://rnfirebase.io/app-check/usage)
+- [Firebase Android App Check debug provider](https://firebase.google.com/docs/app-check/android/debug-provider)
 - [Expo Audio](https://docs.expo.dev/versions/latest/sdk/audio/)
 - [Expo development builds](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Expo SDK reference and supported Node versions](https://docs.expo.dev/versions/latest/)
 
 ## Pixel 8 screenshots
 
