@@ -60,7 +60,15 @@ export async function loadSessions(): Promise<SessionRecord[]> {
 }
 
 export async function saveSession(session: SessionRecord): Promise<void> {
+  await saveSessionLocally(session);
+  await syncSession(session);
+}
+
+export async function saveSessionLocally(session: SessionRecord): Promise<void> {
   await putLocalSession(session);
+}
+
+export async function syncSession(session: SessionRecord): Promise<void> {
   if (!getFirebaseSetup().ready) return;
   prepareAppCheck();
   const uid = await ensureAnonymousUser();

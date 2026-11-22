@@ -3,9 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Eyebrow, PrimaryButton, Screen } from '@/components/ui';
 import { nextReviewAt } from '@/domain/reviewSchedule';
-import type { LearnerSettings, RecapPhrase, SavedPhrase, SessionRecap } from '@/domain/types';
+import type { LearnerSettings, RecapPhrase, SavedPhrase, SessionRecap, SessionRecord } from '@/domain/types';
 import { createSessionRecap } from '@/services/recapService';
-import { loadSettings, savePhrase, saveSession } from '@/services/progress';
+import { loadSettings, savePhrase, saveSessionLocally, syncSession } from '@/services/progress';
 import { clearSessionDraft, getSessionDraft, type SessionDraft } from '@/services/sessionDraft';
 import { colors, radius } from '@/theme';
 
@@ -29,24 +29,48 @@ export default function RecapScreen() {
 
   const generate = useCallback(async (source: SessionDraft, learnerSettings: LearnerSettings) => {
     setLoadState('loading'); setError('');
+    setSyncWarning('');
+    const sessionRecord: SessionRecord = {
+      id: source.id,
+      scenarioId: source.scenario.id,
+      scenarioTitle: source.scenario.title,
+      startedAt: source.startedAt,
+      durationSeconds: source.durationSeconds,
+      summary: null,
+      ...(learnerSettings.saveTranscripts ? { transcript: source.turns } : {}),
+    };
+    let storedLocally = false;
+    try {
+      await saveSessionLocally(sessionRecord);
+      storedLocally = true;
+      setSessionSaved(true);
+    } catch {
+      setSyncWarning('Session details could not be saved on this device.');
+    }
+    if (storedLocally) {
+      try {
+        await syncSession(sessionRecord);
+      } catch {
+        setSyncWarning('Your session is saved on this device, but could not sync to Firebase yet.');
+      }
+    }
+
     try {
       const result = await createSessionRecap(source.turns, learnerSettings);
       setRecap(result);
       setLoadState('ready');
-      const record = {
-        id: source.id,
-        scenarioId: source.scenario.id,
-        scenarioTitle: source.scenario.title,
-        startedAt: source.startedAt,
-        durationSeconds: source.durationSeconds,
-        summary: result,
-        ...(learnerSettings.saveTranscripts ? { transcript: source.turns } : {}),
-      };
+      const completedRecord = { ...sessionRecord, summary: result };
       try {
-        await saveSession(record);
+        await saveSessionLocally(completedRecord);
         setSessionSaved(true);
+        try {
+          await syncSession(completedRecord);
+          setSyncWarning('');
+        } catch {
+          setSyncWarning('Your recap is saved on this device, but could not sync to Firebase yet.');
+        }
       } catch {
-        setSyncWarning('This recap is saved on this device, but could not sync to Firebase yet.');
+        setSyncWarning('The recap is available, but could not be saved on this device.');
       }
       clearSessionDraft();
     } catch (reason) {
@@ -83,7 +107,9 @@ export default function RecapScreen() {
 
       {loadState === 'loading' ? <Card style={styles.loadingCard}><ActivityIndicator color={colors.green} /><Text style={styles.loadingText}>Gathering a few helpful notes…</Text></Card> : null}
       {loadState === 'empty' ? <Card style={styles.emptyCard}><Text style={styles.emptyTitle}>This session recap isn’t available.</Text><Text style={styles.subtitle}>Recaps are made from the live conversation transcript. No practice session or transcript was found on this screen.</Text><Pressable onPress={() => router.replace('/(tabs)')}><Text style={styles.link}>Back to practice →</Text></Pressable></Card> : null}
-      {loadState === 'error' ? <Card style={styles.errorCard}><Text style={styles.errorTitle}>Your session ended, but the recap is unavailable.</Text><Text style={styles.errorText}>{error}</Text>{draft && settings ? <Pressable onPress={() => void generate(draft, settings)}><Text style={styles.link}>Try recap again →</Text></Pressable> : null}<Text style={styles.errorFoot}>The conversation was not saved. Transcript saving is {settings?.saveTranscripts ? 'on' : 'off'}; the temporary session notes stay in memory only while this screen remains open.</Text></Card> : null}
+      {loadState === 'error' ? <Card style={styles.errorCard}><Text style={styles.errorTitle}>{sessionSaved ? 'Your session is saved, but the recap is unavailable.' : 'Your session ended, but the recap is unavailable.'}</Text><Text style={styles.errorText}>{error}</Text>{draft && settings ? <Pressable onPress={() => void generate(draft, settings)}><Text style={styles.link}>Try recap again →</Text></Pressable> : null}<Text style={styles.errorFoot}>{syncWarning || (sessionSaved
+        ? `Session details are saved in your progress. Transcript saving is ${settings?.saveTranscripts ? 'on' : 'off'}.`
+        : 'Session details could not be saved. Temporary session notes stay in memory only while this screen remains open.')}</Text></Card> : null}
 
       {loadState === 'ready' && recap ? <>
         {recap.positiveNote ? <View style={styles.positive}><View style={styles.positiveIcon}><Text style={{ color: colors.deepGreen, fontSize: 18 }}>✳</Text></View><View style={{ flex: 1, gap: 4 }}><Text style={styles.positiveLabel}>A GOOD THING TO KEEP</Text><Text style={styles.positiveText}>{recap.positiveNote}</Text></View></View> : null}

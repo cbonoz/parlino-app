@@ -47,7 +47,7 @@ export type SessionRecord = {
   scenarioTitle: string;
   startedAt: number;
   durationSeconds: number;
-  summary: SessionRecap;
+  summary?: SessionRecap | null;
   transcript?: TranscriptTurn[];
 };
 

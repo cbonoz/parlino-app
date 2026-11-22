@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SCENARIOS, type LearnerSettings, type TranscriptTurn } from '@/domain/types';
 import { LiveAudioPlayer, toMonoPcm16kBase64 } from '@/services/audio';
 import { connectLiveConversation, type LiveConversation, type LiveState } from '@/services/aiSession';
-import { loadSettings } from '@/services/progress';
+import { loadSettings, saveSessionLocally } from '@/services/progress';
 import { getFirebaseSetup } from '@/services/firebase';
 import { setSessionDraft } from '@/services/sessionDraft';
 import { colors, radius } from '@/theme';
@@ -145,6 +145,19 @@ export default function ConversationScreen() {
       turns: turnsRef.current,
     };
     setSessionDraft(draft);
+    try {
+      await saveSessionLocally({
+        id: draft.id,
+        scenarioId: scenario.id,
+        scenarioTitle: scenario.title,
+        startedAt: draft.startedAt,
+        durationSeconds: draft.durationSeconds,
+        summary: null,
+        ...(settings?.saveTranscripts ? { transcript: draft.turns } : {}),
+      });
+    } catch {
+      // Recap screen will retry local persistence and report if it also fails.
+    }
     updateStatus('ended');
     router.replace({ pathname: '/recap', params: { sessionId: draft.id } });
   }
