@@ -79,7 +79,7 @@ export async function connectLiveConversation(
       );
     },
     sendAudio(base64Pcm) {
-      sendQueue = sendQueue.then(() => session.sendAudioRealtime({ mimeType: 'audio/pcm', data: base64Pcm }));
+      sendQueue = sendQueue.then(() => session.sendAudioRealtime({ mimeType: 'audio/pcm;rate=16000', data: base64Pcm }));
       return sendQueue;
     },
     async close() {
