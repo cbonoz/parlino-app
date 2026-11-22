@@ -28,8 +28,8 @@ export async function connectLiveConversation(
   if (!setup.ready) throw new Error(setup.message);
   const tutorInstruction = buildTutorInstruction({ settings, scenario, realTimeCorrections });
   const model = getLiveGenerativeModel(getAI(getApp(), { appCheck: prepareAppCheck() }), {
-    // The RNFirebase Live API guide currently documents this native-audio Live model.
-    model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+    // Use the current Gemini Developer API Live preview model.
+    model: 'gemini-3.1-flash-live-preview',
     generationConfig: {
       responseModalities: [ResponseModality.AUDIO],
       inputAudioTranscription: {},

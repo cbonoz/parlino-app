@@ -175,11 +175,9 @@ export default function ConversationScreen() {
         {status === 'permission-denied' ? <View style={styles.errorCard}><Text style={styles.errorTitle}>Microphone permission is off</Text><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void Linking.openSettings()}><Text style={styles.settingsLink}>Open device settings →</Text></Pressable></View> : null}
         {status === 'error' ? <View style={styles.errorCard}><Text style={styles.errorTitle}>We couldn’t connect</Text><Text style={styles.errorText}>{error}</Text>{setup.ready ? <Pressable onPress={() => void startSession()}><Text style={styles.settingsLink}>Try again →</Text></Pressable> : null}</View> : null}
 
-        {settings ? <View style={styles.optionalRow}><View style={{ flex: 1, gap: 3 }}><Text style={styles.optionalTitle}>Gentle corrections in the moment</Text><Text style={styles.optionalText}>{active
-          ? `This session: ${realTimeCorrections ? 'on' : 'off'}. End it and start a new conversation to change.`
-          : realTimeCorrections
-            ? 'On for your next conversation. The tutor may offer occasional gentle corrections.'
-            : 'Off for your next conversation. Useful corrections will be saved for your recap.'}</Text></View><Switch value={realTimeCorrections} onValueChange={setRealTimeCorrections} disabled={active} trackColor={{ false: '#D9DFDA', true: '#9BC8AA' }} thumbColor={realTimeCorrections ? colors.deepGreen : '#FFFFFF'} /></View> : null}
+        {settings && !active ? <View style={styles.optionalRow}><View style={{ flex: 1, gap: 3 }}><Text style={styles.optionalTitle}>Gentle corrections in the moment</Text><Text style={styles.optionalText}>{realTimeCorrections
+          ? 'On for the next conversation. The tutor may offer occasional gentle corrections.'
+          : 'Off for the next conversation. Useful corrections will be saved for your recap.'}</Text></View><Switch value={realTimeCorrections} onValueChange={setRealTimeCorrections} trackColor={{ false: '#D9DFDA', true: '#9BC8AA' }} thumbColor={realTimeCorrections ? colors.deepGreen : '#FFFFFF'} /></View> : null}
 
         {turns.length > 0 ? <View style={{ gap: 8, width: '100%' }}><Text style={styles.transcriptLabel}>LIVE TRANSCRIPT · NOT SAVED BY DEFAULT</Text>{turns.slice(-5).map((turn, index) => <View key={`${turn.role}-${index}`} style={styles.transcriptRow}><Text style={[styles.speaker, turn.role === 'tutor' && { color: colors.green }]}>{turn.role === 'learner' ? 'YOU' : 'TUTOR'}</Text><Text style={styles.transcriptText}>{turn.text}</Text></View>)}</View> : null}
       </ScrollView>
