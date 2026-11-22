@@ -4,7 +4,7 @@
 
 Parlino helps language learners build confidence through short, level-aware speaking practice: choose a real-life scenario, talk with an AI tutor, then keep a few useful phrases for review.
 
-The selected Android launcher mark is concept 3 in `images/`; concepts 1 and 2 are preserved as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
+The selected Android launcher mark is concept 3 in `images/concepts/`; concepts 1 and 2 are preserved there as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
 
 https://console.firebase.google.com/project/parlino-1/overview
 
@@ -186,7 +186,7 @@ Other known limitations: Firebase AI Logic Live is Preview; the Live model must 
 
 ## Pixel 8 screenshots
 
-Captured from the installed Android standalone test build. The voice screen is shown before starting a session.
+Captured from the installed Android standalone test build. The voice-practice screen is shown before a session starts; the corrections setting applies to the next conversation and is hidden once a session is in flight.
 
 <p align="center">
   <img src="images/parlino-home.png" alt="Parlino practice home with conversation scenarios" width="240" />
@@ -195,5 +195,5 @@ Captured from the installed Android standalone test build. The voice screen is s
 
 <p align="center">
   <img src="images/parlino-settings.png" alt="Parlino privacy and Firebase settings" width="240" />
-  <img src="images/parlino-voice-practice.png" alt="Parlino café voice practice ready screen" width="240" />
+  <img src="images/parlino-voice-practice-current.png" alt="Current Parlino café voice-practice screen with the pre-session corrections toggle" width="240" />
 </p>
