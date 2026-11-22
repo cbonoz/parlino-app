@@ -145,7 +145,7 @@ There is no Firebase AI Logic emulator; real model calls require a configured Fi
 2. Make the inference route visible and testable so learners and judges can tell when work stays on-device and when it uses the cloud.
 3. Finish physical-device testing of multi-turn Live audio, including the microphone echo guard, plus hybrid behavior on supported, offline, and unsupported devices.
 4. Add the project's open-source license, publish the repository for judging, and record a short Android demo showing the finished hybrid flow.
-
+<!--
 ## Hackathon submission checklist
 
 - [ ] Implement and demonstrate Firebase AI Logic Hybrid Inference on Android: Gemini Nano 4 on-device plus cloud fallback.
@@ -153,7 +153,7 @@ There is no Firebase AI Logic emulator; real model calls require a configured Fi
 - [ ] Add an open-source `LICENSE` file; the contest requires one for the public repository.
 - [ ] Publish the source repository and include it in the Devpost entry.
 - [ ] Record a public YouTube demo (no longer than 3 minutes; English or English subtitles) showing the app working on Android.
-- [ ] In the Devpost description, explain Parlino's value proposition, project features and specifically how Firebase AI Logic is used.
+- [ ] In the Devpost description, explain Parlino's value proposition, project features and specifically how Firebase AI Logic is used. -->
 
 See the [official challenge page](https://firebasehybridaihackathon.devpost.com/) for the full rules, deliverables and judging criteria.
 
