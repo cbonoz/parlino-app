@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SCENARIOS, type LearnerSettings, type TranscriptTurn } from '@/domain/types';
+import { createCustomScenario } from '@/domain/scenarios';
 import { countSessionTurns } from '@/domain/sessionStats';
 import { LiveAudioPlayer, toMonoPcm16kBase64 } from '@/services/audio';
 import { connectLiveConversation, type LiveConversation, type LiveState } from '@/services/aiSession';
@@ -16,8 +17,11 @@ import { colors, radius } from '@/theme';
 type ScreenState = LiveState | 'idle' | 'permission-denied';
 
 export default function ConversationScreen() {
-  const params = useLocalSearchParams<{ scenarioId?: string }>();
-  const scenario = SCENARIOS.find((item) => item.id === params.scenarioId) ?? SCENARIOS[0];
+  const params = useLocalSearchParams<{ scenarioId?: string; customTitle?: string; customObjective?: string }>();
+  const customScenario = params.scenarioId === 'custom'
+    ? createCustomScenario(params.customTitle ?? '', params.customObjective ?? '')
+    : null;
+  const scenario = customScenario ?? SCENARIOS.find((item) => item.id === params.scenarioId) ?? SCENARIOS[0];
   const setup = getFirebaseSetup();
   const [settings, setSettings] = useState<LearnerSettings | null>(null);
   const [status, setStatus] = useState<ScreenState>('idle');

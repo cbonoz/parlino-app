@@ -21,7 +21,7 @@ React Native Firebase's AI package does not expose Android hybrid inference, so 
 ## Product flow
 
 1. **Set up a learner profile:** choose target/native languages, proficiency and goal; no full account is required up front.
-2. **Choose a scenario:** café, directions, small talk or workplace.
+2. **Choose a scenario:** café, directions, small talk or workplace—or create a custom situation and practice goal.
 3. **Practice by voice:** the learner speaks to a concise, encouraging tutor. Corrections are deferred by default.
 4. **Get an optional sentence tip:** after a completed learner turn, tap **Coach this sentence** for a focused correction and brief explanation. The coach prefers Firebase AI Logic on-device inference, reports whether the response came from the device or cloud, and warns when cloud inference is used. It is separate from Live voice and cannot interrupt or discard the session.
 5. **Reflect:** get a generated recap with supported corrections, useful phrases and a positive note.

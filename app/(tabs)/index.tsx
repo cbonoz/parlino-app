@@ -1,8 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Card, Eyebrow, Screen } from '@/components/ui';
 import { SCENARIOS, type LearnerSettings, type SavedPhrase, type SessionRecord } from '@/domain/types';
+import { createCustomScenario, CUSTOM_SCENARIO_OBJECTIVE_MAX_LENGTH, CUSTOM_SCENARIO_TITLE_MAX_LENGTH } from '@/domain/scenarios';
 import { loadSavedPhrases, loadSessions, loadSettings } from '@/services/progress';
 import { getFirebaseSetup } from '@/services/firebase';
 import { colors, radius } from '@/theme';
@@ -12,6 +13,10 @@ export default function HomeScreen() {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [phrases, setPhrases] = useState<SavedPhrase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customScenarioExpanded, setCustomScenarioExpanded] = useState(false);
+  const [customTitle, setCustomTitle] = useState('');
+  const [customObjective, setCustomObjective] = useState('');
+  const [customScenarioError, setCustomScenarioError] = useState('');
   const setup = getFirebaseSetup();
 
   useFocusEffect(useCallback(() => {
@@ -25,6 +30,22 @@ export default function HomeScreen() {
   }, []));
 
   const lastSession = sessions[0];
+  const startCustomScenario = () => {
+    const scenario = createCustomScenario(customTitle, customObjective);
+    if (!scenario) {
+      setCustomScenarioError('Add a name and a practice goal to continue.');
+      return;
+    }
+    setCustomScenarioError('');
+    router.push({
+      pathname: '/conversation',
+      params: {
+        scenarioId: scenario.id,
+        customTitle: scenario.title,
+        customObjective: scenario.objective,
+      },
+    });
+  };
 
   return (
     <Screen>
@@ -65,6 +86,57 @@ export default function HomeScreen() {
           <View style={{ flex: 1, gap: 4 }}><Text style={styles.scenarioTitle}>{scenario.title}</Text><Text style={styles.scenarioSub}>{scenario.subtitle}</Text></View>
           <Text style={styles.scenarioArrow}>↗</Text>
         </Pressable>)}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: customScenarioExpanded }}
+          onPress={() => setCustomScenarioExpanded((expanded) => !expanded)}
+          style={({ pressed }) => [styles.scenarioCard, styles.customScenarioCard, pressed && { opacity: 0.8 }]}
+        >
+          <View style={[styles.scenarioIcon, styles.customScenarioIcon]}><Text style={styles.scenarioEmoji}>✦</Text></View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={styles.scenarioTitle}>Create your own</Text>
+            <Text style={styles.scenarioSub}>Practice a moment from your life</Text>
+          </View>
+          <Text style={styles.scenarioArrow}>{customScenarioExpanded ? '⌃' : '＋'}</Text>
+        </Pressable>
+        {customScenarioExpanded ? <View style={styles.customScenarioForm}>
+          <Text style={styles.customScenarioHint}>Choose a situation and what you’d like to practice. The tutor will build the conversation around it.</Text>
+          <View style={styles.customField}>
+            <Text style={styles.customLabel}>Scenario name</Text>
+            <TextInput
+              accessibilityLabel="Custom scenario name"
+              value={customTitle}
+              onChangeText={(value) => { setCustomTitle(value); setCustomScenarioError(''); }}
+              placeholder="At the farmers' market"
+              placeholderTextColor={colors.muted}
+              maxLength={CUSTOM_SCENARIO_TITLE_MAX_LENGTH}
+              returnKeyType="next"
+              style={styles.customInput}
+            />
+          </View>
+          <View style={styles.customField}>
+            <Text style={styles.customLabel}>What do you want to practice?</Text>
+            <TextInput
+              accessibilityLabel="Custom scenario practice goal"
+              value={customObjective}
+              onChangeText={(value) => { setCustomObjective(value); setCustomScenarioError(''); }}
+              placeholder="Ask about seasonal fruit and how to choose something ripe."
+              placeholderTextColor={colors.muted}
+              maxLength={CUSTOM_SCENARIO_OBJECTIVE_MAX_LENGTH}
+              multiline
+              textAlignVertical="top"
+              style={[styles.customInput, styles.customObjectiveInput]}
+            />
+          </View>
+          {customScenarioError ? <Text accessibilityRole="alert" style={styles.customScenarioError}>{customScenarioError}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={startCustomScenario}
+            style={({ pressed }) => [styles.customStartButton, pressed && { opacity: 0.85 }]}
+          >
+            <Text style={styles.customStartText}>Start custom practice →</Text>
+          </Pressable>
+        </View> : null}
       </View>
 
       <View style={styles.sectionHead}><Text style={styles.sectionTitle}>Your progress</Text><Pressable onPress={() => router.push('/(tabs)/review')}><Text style={styles.textLink}>See review →</Text></Pressable></View>
@@ -124,6 +196,17 @@ const styles = StyleSheet.create({
   scenarioTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   scenarioSub: { color: colors.muted, fontSize: 11 },
   scenarioArrow: { color: '#A2B0A7', fontSize: 18, paddingHorizontal: 3 },
+  customScenarioCard: { borderStyle: 'dashed', borderColor: '#C9D8CD' },
+  customScenarioIcon: { backgroundColor: colors.mint },
+  customScenarioForm: { backgroundColor: colors.paper, borderWidth: 1, borderColor: '#DDE8DF', borderRadius: radius.md, padding: 14, gap: 12 },
+  customScenarioHint: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+  customField: { gap: 6 },
+  customLabel: { color: colors.ink, fontSize: 11, fontWeight: '700' },
+  customInput: { minHeight: 42, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 11, paddingVertical: 9, color: colors.ink, fontSize: 12 },
+  customObjectiveInput: { minHeight: 76 },
+  customScenarioError: { color: colors.red, fontSize: 11 },
+  customStartButton: { minHeight: 44, backgroundColor: colors.deepGreen, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  customStartText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
   progressRow: { flexDirection: 'row', gap: 8 },
   progressCard: { flex: 1, padding: 12, paddingVertical: 14, borderRadius: 17, alignItems: 'center', justifyContent: 'center', minHeight: 77 },
   progressNote: { color: colors.muted, fontSize: 10, marginTop: -8 },
