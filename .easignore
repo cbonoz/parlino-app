@@ -4,7 +4,8 @@ node_modules/
 dist/
 coverage/
 web-build/
-android/
+/android/
+modules/*/android/build/
 *.jks
 *.keystore
 .env*

@@ -7,6 +7,7 @@ import { SCENARIOS, type LearnerSettings, type TranscriptTurn } from '@/domain/t
 import { countSessionTurns } from '@/domain/sessionStats';
 import { LiveAudioPlayer, toMonoPcm16kBase64 } from '@/services/audio';
 import { connectLiveConversation, type LiveConversation, type LiveState } from '@/services/aiSession';
+import { coachSentence, type SentenceCoachResult } from '@/services/sentenceCoach';
 import { loadSettings, saveSessionLocally } from '@/services/progress';
 import { getFirebaseSetup } from '@/services/firebase';
 import { setSessionDraft } from '@/services/sessionDraft';
@@ -24,12 +25,17 @@ export default function ConversationScreen() {
   const [elapsed, setElapsed] = useState(0);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
   const [realTimeCorrections, setRealTimeCorrections] = useState(false);
+  const [coachResult, setCoachResult] = useState<{ sentence: string; result: SentenceCoachResult } | null>(null);
+  const [coachError, setCoachError] = useState('');
+  const [coaching, setCoaching] = useState(false);
   const connectionRef = useRef<LiveConversation | null>(null);
   const playerRef = useRef<LiveAudioPlayer | null>(null);
   const stopCaptureRef = useRef<() => void>(() => undefined);
   const turnsRef = useRef<TranscriptTurn[]>([]);
   const startedAtRef = useRef(0);
   const statusRef = useRef<ScreenState>('idle');
+  const coachRequestRef = useRef(false);
+  const onDeviceWarningShownRef = useRef(false);
 
   const handlePcm = useCallback((buffer: Parameters<typeof toMonoPcm16kBase64>[0]) => {
     const connection = connectionRef.current;
@@ -77,6 +83,43 @@ export default function ConversationScreen() {
     turnsRef.current = next;
     setTurns(next);
   }, []);
+
+  async function requestSentenceCoach(sentence: string) {
+    if (!settings || coachRequestRef.current) return;
+    coachRequestRef.current = true;
+    setCoaching(true);
+    setCoachError('');
+    setCoachResult(null);
+    try {
+      const result = await coachSentence(sentence, settings, (deviceStatus) => {
+        if (deviceStatus === 'UNAVAILABLE' && !onDeviceWarningShownRef.current) {
+          onDeviceWarningShownRef.current = true;
+          Alert.alert(
+            'On-device AI isn’t supported here',
+            'This device can’t run the selected Gemini Nano 4 model. Parlino will use Firebase AI Logic in the cloud for this tip instead. Your voice conversation and saved session are unaffected.',
+          );
+        }
+      });
+      const latestLearnerSentence = [...turnsRef.current].reverse().find((turn) => turn.role === 'learner')?.text.trim();
+      if (latestLearnerSentence === sentence.trim()) {
+        setCoachResult({ sentence: sentence.trim(), result });
+        if (result.inferenceSource !== 'ON_DEVICE' && !onDeviceWarningShownRef.current) {
+          onDeviceWarningShownRef.current = true;
+          Alert.alert(
+            'Using cloud inference for this tip',
+            result.deviceStatus === 'UNAVAILABLE'
+              ? 'Gemini Nano 4 isn’t available on this device, so this sentence was sent to Firebase AI Logic in the cloud.'
+              : 'On-device inference wasn’t available for this request, so this sentence was sent to Firebase AI Logic in the cloud.',
+          );
+        }
+      }
+    } catch (reason) {
+      setCoachError(reason instanceof Error ? reason.message : 'The sentence tip is unavailable right now.');
+    } finally {
+      coachRequestRef.current = false;
+      setCoaching(false);
+    }
+  }
 
   function startSession() {
     if (!setup.ready) {
@@ -171,6 +214,8 @@ export default function ConversationScreen() {
   const active = status === 'listening' || status === 'speaking' || status === 'connecting';
   const stateLabel = status === 'connecting' ? 'Connecting securely…' : status === 'speaking' ? 'Your tutor is speaking' : status === 'listening' ? 'Listening' : 'Ready when you are';
   const timeLabel = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
+  const latestLearnerTurn = [...turns].reverse().find((turn) => turn.role === 'learner');
+  const canCoachLatestTurn = status === 'listening' && turns[turns.length - 1]?.role === 'tutor' && !!latestLearnerTurn?.text.trim();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -199,6 +244,34 @@ export default function ConversationScreen() {
           : 'Off for the next conversation. Useful corrections will be saved for your recap.'}</Text></View><Switch value={realTimeCorrections} onValueChange={setRealTimeCorrections} trackColor={{ false: '#D9DFDA', true: '#9BC8AA' }} thumbColor={realTimeCorrections ? colors.deepGreen : '#FFFFFF'} /></View> : null}
 
         {turns.length > 0 ? <View style={{ gap: 8, width: '100%' }}><Text style={styles.transcriptLabel}>LIVE TRANSCRIPT · NOT SAVED BY DEFAULT</Text>{turns.slice(-5).map((turn, index) => <View key={`${turn.role}-${index}`} style={styles.transcriptRow}><Text style={[styles.speaker, turn.role === 'tutor' && { color: colors.green }]}>{turn.role === 'learner' ? 'YOU' : 'TUTOR'}</Text><Text style={styles.transcriptText}>{turn.text}</Text></View>)}</View> : null}
+
+        {canCoachLatestTurn && latestLearnerTurn ? <View style={styles.coachCard}>
+          <View style={styles.coachHeader}>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Text style={styles.coachTitle}>Want a gentle correction?</Text>
+              <Text style={styles.coachPrivacy}>This sentence and your language settings are sent for feedback. It may use Firebase cloud inference if on-device AI isn’t available.</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              disabled={coaching}
+              onPress={() => void requestSentenceCoach(latestLearnerTurn.text)}
+              style={({ pressed }) => [styles.coachButton, (pressed || coaching) && { opacity: 0.7 }]}
+            >
+              <Text style={styles.coachButtonText}>{coaching ? 'Getting tip…' : coachResult?.sentence === latestLearnerTurn.text.trim() ? 'Try again' : 'Coach this sentence'}</Text>
+            </Pressable>
+          </View>
+          {coaching ? <Text style={styles.coachStatus}>Checking the on-device model, then choosing the best available route…</Text> : null}
+          {coachResult?.sentence === latestLearnerTurn.text.trim() ? <>
+            <Text style={styles.coachResponse}>{coachResult.result.text}</Text>
+            <Text style={styles.coachSource}>{coachResult.result.inferenceSource === 'ON_DEVICE' ? 'ON-DEVICE · GEMINI NANO 4' : coachResult.result.inferenceSource === 'CLOUD_FALLBACK' ? 'CLOUD FALLBACK' : 'CLOUD'}</Text>
+            {coachResult.result.inferenceSource !== 'ON_DEVICE' ? <Text style={styles.coachWarning}>
+              {coachResult.result.deviceStatus === 'UNAVAILABLE'
+                ? 'On-device Gemini Nano 4 isn’t supported on this device. This sentence was sent to Firebase AI Logic cloud.'
+                : 'On-device inference wasn’t available for this request. This sentence was sent to Firebase AI Logic cloud.'}
+            </Text> : null}
+          </> : null}
+          {coachError ? <Text accessibilityRole="alert" style={styles.coachError}>{coachError}</Text> : null}
+        </View> : null}
       </ScrollView>
 
       <View style={styles.bottom}>
@@ -248,6 +321,17 @@ const styles = StyleSheet.create({
   transcriptRow: { flexDirection: 'row', gap: 9, alignItems: 'flex-start' },
   speaker: { color: colors.muted, fontSize: 8, fontWeight: '800', width: 43, paddingTop: 2 },
   transcriptText: { color: colors.ink, fontSize: 11, lineHeight: 16, flex: 1 },
+  coachCard: { width: '100%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDE8DF', borderRadius: radius.md, padding: 13, gap: 9 },
+  coachHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  coachTitle: { color: colors.ink, fontSize: 11, fontWeight: '700' },
+  coachPrivacy: { color: colors.muted, fontSize: 9, lineHeight: 13 },
+  coachButton: { minHeight: 36, paddingHorizontal: 12, borderRadius: radius.pill, backgroundColor: colors.deepGreen, justifyContent: 'center', alignItems: 'center' },
+  coachButtonText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
+  coachStatus: { color: colors.muted, fontSize: 10, lineHeight: 14 },
+  coachResponse: { color: colors.ink, backgroundColor: colors.mint, borderRadius: radius.sm, padding: 10, fontSize: 11, lineHeight: 17 },
+  coachSource: { color: colors.green, fontSize: 8, letterSpacing: 1, fontWeight: '800' },
+  coachWarning: { color: colors.gold, fontSize: 9, lineHeight: 13 },
+  coachError: { color: colors.red, fontSize: 10, lineHeight: 14 },
   bottom: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 8, borderTopWidth: 1, borderColor: '#ECEFE9', gap: 9 },
   startButton: { height: 56, borderRadius: radius.pill, backgroundColor: colors.deepGreen, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 11 },
   micIcon: { color: colors.lime, fontSize: 20 },

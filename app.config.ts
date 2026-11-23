@@ -27,7 +27,7 @@ const config: ExpoConfig = {
     'expo-router',
     ['expo-audio', { microphonePermission: 'Allow Parlino to use your microphone for live speaking practice.' }],
     ...(hasAndroidFirebaseConfig ? ['@react-native-firebase/app', '@react-native-firebase/app-check'] : []),
-    ['expo-build-properties', { android: { kotlinVersion: '2.4.0' } }],
+    ['expo-build-properties', { android: { kotlinVersion: '2.4.0', minSdkVersion: 26 } }],
     [
       'react-native-audio-api',
       {
