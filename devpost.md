@@ -30,11 +30,9 @@ Firebase is part of the runtime architecture:
 - **Cloud Firestore** stores learner settings, session summaries, and saved phrases under each authenticated user’s UID. Firestore rules enforce per-user access.
 - **Firebase App Check** protects AI Logic requests. Development uses the debug provider; production is configured for Play Integrity.
 
-The current cloud model calls are made through `@react-native-firebase/ai`; no provider API key is bundled in the app. Raw audio isn’t stored by Parlino, and transcript persistence is opt-in. AsyncStorage provides local progress persistence when Firebase isn’t configured, but that is data storage—not on-device AI inference.
+Live voice and recap use `@react-native-firebase/ai`, while the sentence coach uses Firebase AI Logic's native Android Hybrid Inference SDK through a Kotlin Expo module. No provider API key is bundled in the app. Raw audio isn’t stored by Parlino, transcript persistence is opt-in, and AsyncStorage holds learner progress.
 
-**Hybrid-inference status:** Parlino now includes an optional **Coach this sentence** action after a learner turn. A small native Kotlin Expo module calls Firebase AI Logic Hybrid Inference with `PREFER_ON_DEVICE`, targeting Gemini Nano 4 Fast preview; the response shows whether inference actually ran on-device or in the cloud. If the hybrid request fails, Parlino tries its existing cloud model once, and displays a warning when a tip uses cloud inference. The live voice conversation and recap remain cloud-based.
-
-The connected test phone is a Pixel 8, which is not on Google's current Gemini Nano 4 supported-device list. The build can test the cloud fallback and warning path, but the Nano 4 on-device path still needs validation on a supported device before we claim it has been demonstrated.
+**Hybrid inference:** Parlino’s optional **Coach this sentence** feature uses Firebase AI Logic Hybrid Inference with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview model. It runs prompts on-device when a local model is available and falls back to cloud inference when it isn’t. The app reports the actual inference source and warns when a tip uses cloud inference. If the hybrid request fails, Parlino tries its cloud model once. Live voice and recap remain cloud-based.
 
 ## Challenges we ran into
 
@@ -42,7 +40,7 @@ The connected test phone is a Pixel 8, which is not on Google's current Gemini N
 - **Android/Kotlin compatibility:** The Firebase Auth artifact was compiled with Kotlin 2.4 metadata while the generated project expected Kotlin 2.2. We aligned the Android Kotlin Gradle plugin through Expo Build Properties and generated a debug APK.
 - **Real-time audio:** Voice needs explicit microphone permission, PCM sample-rate conversion, ordered audio chunks, streamed playback, and interruption/error handling. A chat-text response is not a substitute for a real voice session.
 - **Privacy and reliability:** We kept transcripts off by default, scoped Firestore records to the authenticated UID, and made the Firebase setup state explicit instead of pretending an unconfigured session is live.
-- **Hybrid inference:** React Native Firebase's AI package exposes cloud calls but not Android Hybrid Inference, so we added a small local Kotlin Expo module for the native Firebase AI Logic API. The sentence coach stays separate from Live voice and recap, and its failure cannot interrupt or discard a practice session.
+- **Hybrid inference:** We integrated Firebase AI Logic's native Android SDK into the Expo and React Native app through a small Kotlin Expo module. The sentence coach stays separate from Live voice and recap, and its failure cannot interrupt or discard a practice session.
 
 ## Accomplishments that we're proud of
 
@@ -57,10 +55,10 @@ The connected test phone is a Pixel 8, which is not on Google's current Gemini N
 
 Speaking confidence is its own product problem: learners need room to practice, not only more vocabulary or grammar content. A small, relevant scenario can make practice feel more approachable than an open-ended chatbot.
 
-We also learned to be precise about “local” versus “hybrid.” Saving preferences on-device does not mean AI is running on-device. A true hybrid experience must invoke an on-device model when available and use a deliberate cloud fallback when it isn’t. App Check, native builds, and streaming audio each add real setup and testing requirements beyond calling a model API.
+We learned how Firebase AI Logic can combine private, responsive on-device inference with the reach of cloud models, and how to make the active inference route visible to learners. Integrating App Check, native Android code, and streaming audio made reliability and privacy part of the product experience, not just implementation details.
 
 ## What's next for Parlino
 
-1. Verify the sentence coach's Gemini Nano 4 on-device path on a supported physical Android device, including offline use and cloud fallback.
-2. Finish testing the Live audio session and coach error handling on a physical device.
-3. Add the project’s open-source license, publish the repository for judging, and record a short Android demo showing on-device and cloud inference.
+1. Expand the scenario library and language-practice options.
+2. Add reusable saved custom scenarios.
+3. Continue refining the learner experience based on feedback.

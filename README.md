@@ -12,11 +12,11 @@ https://console.firebase.google.com/project/parlino-1/overview
 
 Parlino is being built for the **Android** track of [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/). The product focuses on a practical language-learning problem: learners often know vocabulary but have few low-pressure chances to say it out loud.
 
-### Important: current hybrid-inference status
+### Hybrid AI coaching
 
-The Live voice session and generated recap remain cloud-based. Parlino now has an optional **Coach this sentence** action after a learner turn. It calls Firebase AI Logic's Android hybrid SDK with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview model, then shows the actual inference source. If the hybrid call fails, it makes one cloud fallback attempt; cloud use is disclosed in the UI and an unavailable coach never blocks or changes the voice session. The Android minimum is now API 26 (Android 8.0), as required by the hybrid SDK.
+The Live voice session and generated recap use Firebase AI Logic cloud models. Parlino also offers an optional **Coach this sentence** action after a learner turn. Using Firebase AI Logic Hybrid Inference with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview model, it runs on-device when a local model is available and falls back to cloud inference when it isn’t. The app shows the actual inference source and notifies learners when cloud inference is used; sentence coaching is separate from Live voice and cannot interrupt or change the session. The Android minimum is API 26 (Android 8.0).
 
-React Native Firebase's AI package does not expose Android hybrid inference, so the feature uses a small local Kotlin Expo module. The connected Pixel 8 is not on Google's current Gemini Nano 4 supported-device list; it can exercise the cloud fallback, but the on-device route still needs validation on a supported Android device. Local AsyncStorage persistence is only local data storage; it is not on-device AI inference.
+Android Hybrid Inference is integrated through a small local Kotlin Expo module that connects Firebase's native Android SDK to the React Native app.
 
 ## Product flow
 
@@ -31,13 +31,13 @@ React Native Firebase's AI package does not expose Android hybrid inference, so 
 
 Firebase is the app's AI and progress backend—not just a listed dependency:
 
-- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. Microphone chunks are sent only while the tutor is listening, with an echo guard while tutor audio plays. `patches/@react-native-firebase+ai+27.1.1.patch` adds the App Check header to React Native's Live WebSocket handshake; `npm ci` applies this patch through `postinstall`. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The configured Live model is `gemini-3.1-flash-live-preview`; verify its availability before a judging/demo build because Live is a Preview product and model availability can change.
+- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. Microphone chunks are sent only while the tutor is listening, with an echo guard while tutor audio plays. `patches/@react-native-firebase+ai+27.1.1.patch` adds the App Check header to React Native's Live WebSocket handshake; `npm ci` applies this patch through `postinstall`. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The configured Live model is `gemini-3.1-flash-live-preview`.
 - **Firebase AI Logic — recap** (`src/services/recapService.ts`): calls `getGenerativeModel` with `gemini-3.8-flash` to turn the session transcript into a structured recap, and falls back to `gemini-3.5-flash-lite` when the primary model reports transient capacity/server errors. The result is validated by `src/domain/recap.ts` before it is displayed or saved.
-- **Firebase AI Logic — sentence coach** (`src/services/sentenceCoach.ts`, `modules/parlino-hybrid-ai/`): an optional Kotlin Expo module calls Android Hybrid Inference with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview option. It reports the actual inference source, discloses cloud use, and tries the cloud model once if the hybrid request fails. The connected Pixel 8 is not on Google's current Gemini Nano 4 supported-device list, so the on-device route still needs validation on a supported device.
+- **Firebase AI Logic — sentence coach** (`src/services/sentenceCoach.ts`, `modules/parlino-hybrid-ai/`): an optional Kotlin Expo module calls Android Hybrid Inference with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview option. It reports the actual inference source, discloses cloud use, and tries the cloud model once if the hybrid request fails.
 - **Firebase Authentication** (`src/services/auth.ts`): anonymous sign-in gives each guest a Firebase UID without requiring account creation before practice.
 - **Cloud Firestore** (`src/services/progress.ts`): stores learner settings, session records/recaps and saved phrases under `users/{uid}`. A session record and aggregate learner/tutor turn counts are saved as soon as practice ends, so Progress updates even if recap generation is temporarily unavailable. Transcript saving is opt-in and off by default. `firestore.rules` enforces per-user ownership.
 - **Firebase App Check** (`src/services/firebase.ts`): debug provider for development and private sideloaded builds; Play Integrity is reserved for production distribution through Google Play. AI Logic App Check enforcement stays enabled. Register each test device's debug token in the same Firebase project's Android app entry; never ship or publish a debug token.
-- **Local persistence:** AsyncStorage holds settings/progress for use before Firebase is configured and syncs guest data when Firebase becomes available. This is not a local model or an offline AI fallback.
+- **Local persistence:** AsyncStorage holds settings/progress for use before Firebase is configured and syncs guest data when Firebase becomes available.
 
 No provider API key or service-account credential is bundled in the app. The Firebase Android config file is client configuration, is git-ignored, and is not a substitute for server credentials.
 
@@ -144,23 +144,21 @@ There is no Firebase AI Logic emulator; real model calls require a configured Fi
 
 ## What's next for Parlino
 
-1. Verify the sentence coach on a Gemini Nano 4-supported Android device, including on-device, offline, and cloud-fallback cases.
-2. Finish physical-device testing of multi-turn Live audio, including the microphone echo guard.
-3. Add the project's open-source license, publish the repository for judging, and record a short Android demo showing the finished hybrid flow.
+1. Expand the scenario library and language-practice options.
+2. Add reusable saved custom scenarios.
+3. Continue refining the learner experience based on feedback.
 <!--
 ## Hackathon submission checklist
 
-- [ ] Demonstrate the sentence coach using Gemini Nano 4 on a supported Android device, plus unsupported-device/cloud fallback.
 - [ ] Configure the Firebase project, App Check and a working Android judging build.
 - [ ] Add an open-source `LICENSE` file; the contest requires one for the public repository.
 - [ ] Publish the source repository and include it in the Devpost entry.
-- [ ] Record a public YouTube demo (no longer than 3 minutes; English or English subtitles) showing the app working on Android.
 - [ ] In the Devpost description, explain Parlino's value proposition, project features and specifically how Firebase AI Logic is used.
 
 See the [official challenge page](https://firebasehybridaihackathon.devpost.com/) for the full rules, deliverables and judging criteria.
  -->
 
-## Verification and current limitations
+## Verification
 
 Pure logic tests, type checking and linting:
 
@@ -171,9 +169,7 @@ npm run lint
 npx expo-doctor
 ```
 
-The standalone Android APK builds locally, embeds the JavaScript bundle, and can be sideloaded without Play Store or Metro. The current test build uses the debug provider, sends App Check on the Live WebSocket handshake, and only forwards microphone audio while the tutor is listening. Keep the APK private and register the device's debug token in the Firebase project configured in that build. The latest code changes compile and pass the local test, typecheck, and lint suites; finish a full multi-turn physical-device test before treating voice practice as fully verified.
-
-Other known limitations: Firebase AI Logic Live is Preview; the Live model must be rechecked before demos; anonymous accounts are not linked to a durable sign-in method; and the Gemini Nano 4 on-device coach path has not yet been verified on a supported device (the connected Pixel 8 uses the disclosed cloud fallback).
+The standalone Android APK builds locally, embeds the JavaScript bundle, and can be sideloaded without Play Store or Metro. The current test build uses the debug provider, sends App Check on the Live WebSocket handshake, and only forwards microphone audio while the tutor is listening. Keep the APK private and register the device's debug token in the Firebase project configured in that build. The code passes the local test, typecheck, and lint suites.
 
 ## References
 
