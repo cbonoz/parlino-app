@@ -22,7 +22,7 @@ Android Hybrid Inference is integrated through a small local Kotlin Expo module 
 
 1. **Set up a learner profile:** choose target/native languages, proficiency and goal; no full account is required up front.
 2. **Choose a scenario:** café, directions, small talk or workplace—or create a custom situation and practice goal.
-3. **Practice by voice:** the learner speaks to a concise, encouraging tutor. Corrections are deferred by default.
+3. **Practice by voice:** the learner speaks to a concise, encouraging tutor and can mute their microphone while the conversation stays active. Corrections are deferred by default.
 4. **Get an optional sentence tip:** after a completed learner turn, tap **Coach this sentence** for a focused correction and brief explanation. The coach prefers Firebase AI Logic on-device inference, reports whether the response came from the device or cloud, and warns when cloud inference is used. It is separate from Live voice and cannot interrupt or discard the session.
 5. **Reflect:** get a generated recap with supported corrections, useful phrases and a positive note.
 6. **Review:** save phrases and revisit them on a simple 1, 3, 7, 14 and 30-day reminder cadence. This is a practical reminder schedule, not a scientific claim.

@@ -15,6 +15,8 @@ Parlino is an AI speaking partner for short, practical conversations using Fireb
 
 The learner speaks aloud while a concise tutor keeps the conversation moving at their level. Real-time corrections are optional and off by default; after a session, Parlino offers a gentle recap with useful phrases, supported corrections, and one positive observation. Learners can save phrases and revisit them later.
 
+During an active voice conversation, a mute toggle lets the learner pause microphone audio without ending the session.
+
 After a completed learner turn, the learner can optionally tap **Coach this sentence** for a focused correction and brief explanation. It prefers Firebase AI Logic on-device inference, reports whether the response actually came from the device or cloud, and warns when cloud inference is used. This separate request cannot interrupt or discard the voice session.
 
 The goal isn’t to replace a class, tutor, or real conversation. It’s to make the first few speaking attempts feel accessible—wherever the learner is and before they feel ready to speak in public.

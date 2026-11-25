@@ -38,14 +38,17 @@ export default function ConversationScreen() {
   const turnsRef = useRef<TranscriptTurn[]>([]);
   const startedAtRef = useRef(0);
   const statusRef = useRef<ScreenState>('idle');
+  const microphoneMutedRef = useRef(false);
   const coachRequestRef = useRef(false);
   const onDeviceWarningShownRef = useRef(false);
+  const [microphoneMuted, setMicrophoneMuted] = useState(false);
 
   const handlePcm = useCallback((buffer: Parameters<typeof toMonoPcm16kBase64>[0]) => {
     const connection = connectionRef.current;
     if (
       !connection ||
       statusRef.current !== 'listening' ||
+      microphoneMutedRef.current ||
       playerRef.current?.isPlaying
     ) return;
     try {
@@ -78,6 +81,11 @@ export default function ConversationScreen() {
   }, [stream]);
 
   const updateStatus = useCallback((next: ScreenState) => { statusRef.current = next; setStatus(next); }, []);
+  const toggleMicrophoneMute = useCallback(() => {
+    const nextMuted = !microphoneMutedRef.current;
+    microphoneMutedRef.current = nextMuted;
+    setMicrophoneMuted(nextMuted);
+  }, []);
   const appendTranscript = useCallback((turn: TranscriptTurn) => {
     const previous = turnsRef.current;
     const last = previous[previous.length - 1];
@@ -144,6 +152,8 @@ export default function ConversationScreen() {
 
   async function requestPermissionAndConnect() {
     if (!settings) return;
+    microphoneMutedRef.current = false;
+    setMicrophoneMuted(false);
     setError(''); updateStatus('connecting');
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -185,6 +195,8 @@ export default function ConversationScreen() {
     connectionRef.current = null;
     await playerRef.current?.stop().catch(() => undefined);
     playerRef.current = null;
+    microphoneMutedRef.current = false;
+    setMicrophoneMuted(false);
     const endedAt = Date.now();
     const startedAt = startedAtRef.current || endedAt;
     const durationSeconds = Math.max(0, Math.floor((endedAt - startedAt) / 1000));
@@ -216,6 +228,7 @@ export default function ConversationScreen() {
   }
 
   const active = status === 'listening' || status === 'speaking' || status === 'connecting';
+  const conversationConnected = status === 'listening' || status === 'speaking';
   const stateLabel = status === 'connecting' ? 'Connecting securely…' : status === 'speaking' ? 'Your tutor is speaking' : status === 'listening' ? 'Listening' : 'Ready when you are';
   const timeLabel = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
   const latestLearnerTurn = [...turns].reverse().find((turn) => turn.role === 'learner');
@@ -234,7 +247,7 @@ export default function ConversationScreen() {
 
         <View style={styles.voiceCenter}>
           <View style={[styles.orbit, active && styles.orbitActive]}><View style={[styles.orbitInner, status === 'speaking' && styles.orbitSpeaking]}><Text style={styles.voiceGlyph}>{status === 'speaking' ? '◖' : '●'}</Text></View></View>
-          <View style={styles.connectionLine}><View style={[styles.connectionDot, active && { backgroundColor: colors.green }]} /><Text style={styles.connectionText}>{stateLabel}</Text></View>
+          <View style={styles.connectionLine}><View style={[styles.connectionDot, active && { backgroundColor: colors.green }]} /><Text style={styles.connectionText}>{microphoneMuted && conversationConnected ? `${stateLabel} · Mic muted` : stateLabel}</Text></View>
         {active || status === 'ended' ? <Text style={styles.timer}>{timeLabel}</Text> : null}
           {status === 'speaking' ? <Text style={styles.levelNote}>Take your time. You can speak naturally.</Text> : null}
         </View>
@@ -279,8 +292,21 @@ export default function ConversationScreen() {
       </ScrollView>
 
       <View style={styles.bottom}>
-        {active ? <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable> : status === 'ended' ? null : <Pressable accessibilityRole="button" onPress={() => void startSession()} style={({ pressed }) => [styles.startButton, pressed && { opacity: 0.75 }]}><Text style={styles.micIcon}>◖</Text><Text style={styles.startText}>{setup.ready ? 'Allow mic & start' : 'Check voice setup'}</Text></Pressable>}
-        <Text style={styles.privacy}>Your voice is sent only while the tutor is listening. Raw audio is not saved. {settings?.saveTranscripts ? 'Transcript saving is on.' : 'Transcript saving is off.'}</Text>
+        {active ? <View style={styles.activeControls}>
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel="Microphone mute"
+            accessibilityHint={microphoneMuted ? 'Turn on microphone audio for the tutor.' : 'Stop sending microphone audio to the tutor.'}
+            accessibilityState={{ checked: microphoneMuted }}
+            onPress={toggleMicrophoneMute}
+            style={({ pressed }) => [styles.muteButton, microphoneMuted && styles.muteButtonActive, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={[styles.muteIcon, microphoneMuted && styles.muteIconActive]}>{microphoneMuted ? '⊘' : '◖'}</Text>
+            <Text style={[styles.muteText, microphoneMuted && styles.muteTextActive]}>{microphoneMuted ? 'Unmute mic' : 'Mute mic'}</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, !conversationConnected && styles.endButtonSolo, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable>
+        </View> : status === 'ended' ? null : <Pressable accessibilityRole="button" onPress={() => void startSession()} style={({ pressed }) => [styles.startButton, pressed && { opacity: 0.75 }]}><Text style={styles.micIcon}>◖</Text><Text style={styles.startText}>{setup.ready ? 'Allow mic & start' : 'Check voice setup'}</Text></Pressable>}
+        <Text style={styles.privacy}>{microphoneMuted ? 'Microphone muted. No voice audio is being sent. ' : 'Your voice is sent only while the tutor is listening. '}Raw audio is not saved. {settings?.saveTranscripts ? 'Transcript saving is on.' : 'Transcript saving is off.'}</Text>
       </View>
     </SafeAreaView>
   );
@@ -340,7 +366,15 @@ const styles = StyleSheet.create({
   startButton: { height: 56, borderRadius: radius.pill, backgroundColor: colors.deepGreen, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 11 },
   micIcon: { color: colors.lime, fontSize: 20 },
   startText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  endButton: { height: 54, borderRadius: radius.pill, backgroundColor: '#F1E4E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 11 },
+  activeControls: { flexDirection: 'row', gap: 10 },
+  muteButton: { flex: 1, height: 54, borderRadius: radius.pill, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 9 },
+  muteButtonActive: { backgroundColor: colors.mint, borderColor: '#BBD7C2' },
+  muteIcon: { color: colors.deepGreen, fontSize: 19, fontWeight: '700' },
+  muteIconActive: { color: colors.green },
+  muteText: { color: colors.deepGreen, fontSize: 13, fontWeight: '700' },
+  muteTextActive: { color: colors.green },
+  endButtonSolo: { flex: 0, width: '100%' },
+  endButton: { flex: 1, height: 54, borderRadius: radius.pill, backgroundColor: '#F1E4E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   endIcon: { width: 23, height: 23, borderRadius: 12, backgroundColor: '#C96C5C', alignItems: 'center', justifyContent: 'center' },
   endSquare: { width: 8, height: 8, backgroundColor: '#FFFFFF', borderRadius: 2 },
   endText: { color: '#873C32', fontSize: 14, fontWeight: '700' },

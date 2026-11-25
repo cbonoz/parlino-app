@@ -6,6 +6,7 @@ coverage/
 web-build/
 /android/
 modules/*/android/build/
+modules/*/android/.gradle/
 *.jks
 *.keystore
 google-services.json
