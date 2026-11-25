@@ -5,6 +5,7 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SCENARIOS, type LearnerSettings, type TranscriptTurn } from '@/domain/types';
 import { createCustomScenario } from '@/domain/scenarios';
+import { shouldForwardMicrophoneAudio } from '@/domain/microphone';
 import { countSessionTurns } from '@/domain/sessionStats';
 import { LiveAudioPlayer, toMonoPcm16kBase64 } from '@/services/audio';
 import { connectLiveConversation, type LiveConversation, type LiveState } from '@/services/aiSession';
@@ -32,6 +33,7 @@ export default function ConversationScreen() {
   const [coachResult, setCoachResult] = useState<{ sentence: string; result: SentenceCoachResult } | null>(null);
   const [coachError, setCoachError] = useState('');
   const [coaching, setCoaching] = useState(false);
+  const [microphoneToggleBusy, setMicrophoneToggleBusy] = useState(false);
   const connectionRef = useRef<LiveConversation | null>(null);
   const playerRef = useRef<LiveAudioPlayer | null>(null);
   const stopCaptureRef = useRef<() => void>(() => undefined);
@@ -39,18 +41,19 @@ export default function ConversationScreen() {
   const startedAtRef = useRef(0);
   const statusRef = useRef<ScreenState>('idle');
   const microphoneMutedRef = useRef(false);
+  const microphoneToggleInProgressRef = useRef(false);
   const coachRequestRef = useRef(false);
   const onDeviceWarningShownRef = useRef(false);
   const [microphoneMuted, setMicrophoneMuted] = useState(false);
 
   const handlePcm = useCallback((buffer: Parameters<typeof toMonoPcm16kBase64>[0]) => {
     const connection = connectionRef.current;
-    if (
-      !connection ||
-      statusRef.current !== 'listening' ||
-      microphoneMutedRef.current ||
-      playerRef.current?.isPlaying
-    ) return;
+    if (!connection || !shouldForwardMicrophoneAudio({
+      hasConnection: !!connection,
+      isListening: statusRef.current === 'listening',
+      isMuted: microphoneMutedRef.current,
+      tutorAudioPlaying: playerRef.current?.isPlaying ?? false,
+    })) return;
     try {
       void connection.sendAudio(toMonoPcm16kBase64(buffer)).catch((reason: unknown) => {
         const message = reason instanceof Error ? reason.message : 'Audio could not be sent. Check your connection.';
@@ -81,11 +84,33 @@ export default function ConversationScreen() {
   }, [stream]);
 
   const updateStatus = useCallback((next: ScreenState) => { statusRef.current = next; setStatus(next); }, []);
-  const toggleMicrophoneMute = useCallback(() => {
+  const toggleMicrophoneMute = useCallback(async () => {
+    if (microphoneToggleInProgressRef.current) return;
+    microphoneToggleInProgressRef.current = true;
+    setMicrophoneToggleBusy(true);
     const nextMuted = !microphoneMutedRef.current;
-    microphoneMutedRef.current = nextMuted;
-    setMicrophoneMuted(nextMuted);
-  }, []);
+    try {
+      if (nextMuted) {
+        // Gate any in-flight callback before releasing the native microphone.
+        microphoneMutedRef.current = true;
+        setMicrophoneMuted(true);
+        stream.stop();
+      } else {
+        // Re-acquire the native stream before allowing PCM to be forwarded.
+        await stream.start();
+        microphoneMutedRef.current = false;
+        setMicrophoneMuted(false);
+      }
+    } catch {
+      Alert.alert(
+        'Microphone unavailable',
+        'Parlino could not resume microphone capture. End and restart the conversation to try again.',
+      );
+    } finally {
+      microphoneToggleInProgressRef.current = false;
+      setMicrophoneToggleBusy(false);
+    }
+  }, [stream]);
   const appendTranscript = useCallback((turn: TranscriptTurn) => {
     const previous = turnsRef.current;
     const last = previous[previous.length - 1];
@@ -154,6 +179,7 @@ export default function ConversationScreen() {
     if (!settings) return;
     microphoneMutedRef.current = false;
     setMicrophoneMuted(false);
+    setMicrophoneToggleBusy(false);
     setError(''); updateStatus('connecting');
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -197,6 +223,7 @@ export default function ConversationScreen() {
     playerRef.current = null;
     microphoneMutedRef.current = false;
     setMicrophoneMuted(false);
+    setMicrophoneToggleBusy(false);
     const endedAt = Date.now();
     const startedAt = startedAtRef.current || endedAt;
     const durationSeconds = Math.max(0, Math.floor((endedAt - startedAt) / 1000));
@@ -298,11 +325,12 @@ export default function ConversationScreen() {
             accessibilityLabel="Microphone mute"
             accessibilityHint={microphoneMuted ? 'Turn on microphone audio for the tutor.' : 'Stop sending microphone audio to the tutor.'}
             accessibilityState={{ checked: microphoneMuted }}
+            disabled={microphoneToggleBusy}
             onPress={toggleMicrophoneMute}
-            style={({ pressed }) => [styles.muteButton, microphoneMuted && styles.muteButtonActive, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [styles.muteButton, microphoneMuted && styles.muteButtonActive, (pressed || microphoneToggleBusy) && { opacity: 0.8 }]}
           >
             <Text style={[styles.muteIcon, microphoneMuted && styles.muteIconActive]}>{microphoneMuted ? '⊘' : '◖'}</Text>
-            <Text style={[styles.muteText, microphoneMuted && styles.muteTextActive]}>{microphoneMuted ? 'Unmute mic' : 'Mute mic'}</Text>
+            <Text style={[styles.muteText, microphoneMuted && styles.muteTextActive]}>{microphoneToggleBusy ? 'Updating microphone…' : microphoneMuted ? 'Unmute mic' : 'Mute mic'}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable>
         </View> : status === 'ended' ? null : <Pressable accessibilityRole="button" onPress={() => void startSession()} style={({ pressed }) => [styles.startButton, pressed && { opacity: 0.75 }]}><Text style={styles.micIcon}>◖</Text><Text style={styles.startText}>{setup.ready ? 'Allow mic & start' : 'Check voice setup'}</Text></Pressable>}
