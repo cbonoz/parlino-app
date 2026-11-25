@@ -304,7 +304,7 @@ export default function ConversationScreen() {
             <Text style={[styles.muteIcon, microphoneMuted && styles.muteIconActive]}>{microphoneMuted ? '⊘' : '◖'}</Text>
             <Text style={[styles.muteText, microphoneMuted && styles.muteTextActive]}>{microphoneMuted ? 'Unmute mic' : 'Mute mic'}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, !conversationConnected && styles.endButtonSolo, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable>
         </View> : status === 'ended' ? null : <Pressable accessibilityRole="button" onPress={() => void startSession()} style={({ pressed }) => [styles.startButton, pressed && { opacity: 0.75 }]}><Text style={styles.micIcon}>◖</Text><Text style={styles.startText}>{setup.ready ? 'Allow mic & start' : 'Check voice setup'}</Text></Pressable>}
         <Text style={styles.privacy}>{microphoneMuted ? 'Microphone muted. No voice audio is being sent. ' : 'Your voice is sent only while the tutor is listening. '}Raw audio is not saved. {settings?.saveTranscripts ? 'Transcript saving is on.' : 'Transcript saving is off.'}</Text>
       </View>
@@ -366,15 +366,14 @@ const styles = StyleSheet.create({
   startButton: { height: 56, borderRadius: radius.pill, backgroundColor: colors.deepGreen, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 11 },
   micIcon: { color: colors.lime, fontSize: 20 },
   startText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  activeControls: { flexDirection: 'row', gap: 10 },
-  muteButton: { flex: 1, height: 54, borderRadius: radius.pill, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 9 },
-  muteButtonActive: { backgroundColor: colors.mint, borderColor: '#BBD7C2' },
+  activeControls: { width: '100%', flexDirection: 'column', gap: 9 },
+  muteButton: { width: '100%', height: 50, borderRadius: radius.pill, backgroundColor: colors.mint, borderWidth: 1, borderColor: '#BBD7C2', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 9 },
+  muteButtonActive: { backgroundColor: colors.deepGreen, borderColor: colors.deepGreen },
   muteIcon: { color: colors.deepGreen, fontSize: 19, fontWeight: '700' },
-  muteIconActive: { color: colors.green },
+  muteIconActive: { color: '#FFFFFF' },
   muteText: { color: colors.deepGreen, fontSize: 13, fontWeight: '700' },
-  muteTextActive: { color: colors.green },
-  endButtonSolo: { flex: 0, width: '100%' },
-  endButton: { flex: 1, height: 54, borderRadius: radius.pill, backgroundColor: '#F1E4E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+  muteTextActive: { color: '#FFFFFF' },
+  endButton: { width: '100%', height: 54, borderRadius: radius.pill, backgroundColor: '#F1E4E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   endIcon: { width: 23, height: 23, borderRadius: 12, backgroundColor: '#C96C5C', alignItems: 'center', justifyContent: 'center' },
   endSquare: { width: 8, height: 8, backgroundColor: '#FFFFFF', borderRadius: 2 },
   endText: { color: '#873C32', fontSize: 14, fontWeight: '700' },
