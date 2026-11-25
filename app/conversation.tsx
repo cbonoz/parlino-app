@@ -42,6 +42,7 @@ export default function ConversationScreen() {
   const statusRef = useRef<ScreenState>('idle');
   const microphoneMutedRef = useRef(false);
   const microphoneToggleInProgressRef = useRef(false);
+  const sessionGenerationRef = useRef(0);
   const coachRequestRef = useRef(false);
   const onDeviceWarningShownRef = useRef(false);
   const [microphoneMuted, setMicrophoneMuted] = useState(false);
@@ -89,6 +90,7 @@ export default function ConversationScreen() {
     microphoneToggleInProgressRef.current = true;
     setMicrophoneToggleBusy(true);
     const nextMuted = !microphoneMutedRef.current;
+    const sessionGeneration = sessionGenerationRef.current;
     try {
       if (nextMuted) {
         // Gate any in-flight callback before releasing the native microphone.
@@ -98,14 +100,20 @@ export default function ConversationScreen() {
       } else {
         // Re-acquire the native stream before allowing PCM to be forwarded.
         await stream.start();
+        if (sessionGenerationRef.current !== sessionGeneration) {
+          stream.stop();
+          return;
+        }
         microphoneMutedRef.current = false;
         setMicrophoneMuted(false);
       }
     } catch {
-      Alert.alert(
-        'Microphone unavailable',
-        'Parlino could not resume microphone capture. End and restart the conversation to try again.',
-      );
+      if (sessionGenerationRef.current === sessionGeneration) {
+        Alert.alert(
+          'Microphone unavailable',
+          'Parlino could not resume microphone capture. End and restart the conversation to try again.',
+        );
+      }
     } finally {
       microphoneToggleInProgressRef.current = false;
       setMicrophoneToggleBusy(false);
@@ -177,6 +185,7 @@ export default function ConversationScreen() {
 
   async function requestPermissionAndConnect() {
     if (!settings) return;
+    sessionGenerationRef.current += 1;
     microphoneMutedRef.current = false;
     setMicrophoneMuted(false);
     setMicrophoneToggleBusy(false);
@@ -216,6 +225,7 @@ export default function ConversationScreen() {
   }
 
   async function endSession() {
+    sessionGenerationRef.current += 1;
     stream.stop();
     await connectionRef.current?.close().catch(() => undefined);
     connectionRef.current = null;
@@ -320,7 +330,7 @@ export default function ConversationScreen() {
 
       <View style={styles.bottom}>
         {active ? <View style={styles.activeControls}>
-          <Pressable
+          {conversationConnected ? <Pressable
             accessibilityRole="switch"
             accessibilityLabel="Microphone mute"
             accessibilityHint={microphoneMuted ? 'Turn on microphone audio for the tutor.' : 'Stop sending microphone audio to the tutor.'}
@@ -331,7 +341,7 @@ export default function ConversationScreen() {
           >
             <Text style={[styles.muteIcon, microphoneMuted && styles.muteIconActive]}>{microphoneMuted ? '⊘' : '◖'}</Text>
             <Text style={[styles.muteText, microphoneMuted && styles.muteTextActive]}>{microphoneToggleBusy ? 'Updating microphone…' : microphoneMuted ? 'Unmute mic' : 'Mute mic'}</Text>
-          </Pressable>
+          </Pressable> : null}
           <Pressable accessibilityRole="button" onPress={() => void endSession()} style={({ pressed }) => [styles.endButton, pressed && { opacity: 0.8 }]}><View style={styles.endIcon}><View style={styles.endSquare} /></View><Text style={styles.endText}>End conversation</Text></Pressable>
         </View> : status === 'ended' ? null : <Pressable accessibilityRole="button" onPress={() => void startSession()} style={({ pressed }) => [styles.startButton, pressed && { opacity: 0.75 }]}><Text style={styles.micIcon}>◖</Text><Text style={styles.startText}>{setup.ready ? 'Allow mic & start' : 'Check voice setup'}</Text></Pressable>}
         <Text style={styles.privacy}>{microphoneMuted ? 'Microphone muted. No voice audio is being sent. ' : 'Your voice is sent only while the tutor is listening. '}Raw audio is not saved. {settings?.saveTranscripts ? 'Transcript saving is on.' : 'Transcript saving is off.'}</Text>
