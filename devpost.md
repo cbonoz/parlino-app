@@ -61,6 +61,9 @@ We learned how Firebase AI Logic can combine private, responsive on-device infer
 
 ## What's next for Parlino
 
+Parlino is an open source app that anyone can fork or build locally with BOYK (bring your own key).
+
+Build instructions on the github here: https://github.com/cbonoz/parlino-app
 1. Expand the scenario library and language-practice options.
-2. Add reusable saved custom scenarios.
+2. Deepen personalization across practice and phrase review.
 3. Continue refining the learner experience based on feedback.

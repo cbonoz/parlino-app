@@ -2,9 +2,11 @@
 
 **Your AI partner for speaking a new language.**
 
-Parlino helps language learners build confidence through short, level-aware speaking practice: choose a real-life scenario, talk with an AI tutor, then keep a few useful phrases for review.
+Parlino helps language learners build confidence through short, level-aware speaking practice: choose an everyday or custom scenario, talk with an AI tutor, optionally get hybrid AI feedback on a sentence, then keep useful phrases for review.
 
 The selected Android launcher mark is concept 3 in `images/concepts/`; concepts 1 and 2 are preserved there as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
+
+Built for the <a href="https://firebasehybridaihackathon.devpost.com">Firebase Hybrid 26</a> hackathon.
 
 https://console.firebase.google.com/project/parlino-1/overview
 
@@ -31,7 +33,7 @@ Android Hybrid Inference is integrated through a small local Kotlin Expo module 
 
 Firebase is the app's AI and progress backend—not just a listed dependency:
 
-- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. Microphone chunks are sent only while the tutor is listening, with an echo guard while tutor audio plays. `patches/@react-native-firebase+ai+27.1.1.patch` adds the App Check header to React Native's Live WebSocket handshake; `npm ci` applies this patch through `postinstall`. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The configured Live model is `gemini-3.1-flash-live-preview`.
+- **Firebase AI Logic — Live voice tutor** (`src/services/aiSession.ts`): calls React Native Firebase's `getLiveGenerativeModel`, opens a Live session, sends 16 kHz PCM microphone chunks with `sendAudioRealtime`, and plays streamed audio responses. Microphone chunks are sent only while the tutor is listening, with an echo guard while tutor audio plays. The in-call mute toggle stops microphone capture and restarts it when unmuted. `patches/@react-native-firebase+ai+27.1.1.patch` adds the App Check header to React Native's Live WebSocket handshake; `npm ci` applies this patch through `postinstall`. The tutor prompt is assembled in `src/services/tutorPrompt.ts`. The configured Live model is `gemini-3.1-flash-live-preview`.
 - **Firebase AI Logic — recap** (`src/services/recapService.ts`): calls `getGenerativeModel` with `gemini-3.8-flash` to turn the session transcript into a structured recap, and falls back to `gemini-3.5-flash-lite` when the primary model reports transient capacity/server errors. The result is validated by `src/domain/recap.ts` before it is displayed or saved.
 - **Firebase AI Logic — sentence coach** (`src/services/sentenceCoach.ts`, `modules/parlino-hybrid-ai/`): an optional Kotlin Expo module calls Android Hybrid Inference with `PREFER_ON_DEVICE` and the Gemini Nano 4 Fast preview option. It reports the actual inference source, discloses cloud use, and tries the cloud model once if the hybrid request fails.
 - **Firebase Authentication** (`src/services/auth.ts`): anonymous sign-in gives each guest a Firebase UID without requiring account creation before practice.
@@ -55,7 +57,7 @@ Parlino can be built and installed locally without publishing it to Google Play.
 ### Prerequisites
 
 - A Node.js version supported by Expo SDK 58 (Node 22.13.x, 24.3+, 26.x, or 27+).
-- JDK **17**, Android SDK and Android platform tools (`adb`).
+- JDK **17**, Android SDK and Android platform tools (`adb`); test devices run Android 8.0 (API 26) or later.
 - A Firebase project and local `google-services.json`; see [Firebase project setup](#firebase-project-setup) below.
 - For voice testing, an Android device with microphone access, internet, and USB debugging enabled.
 
@@ -65,7 +67,6 @@ The Expo config sets Kotlin Gradle plugin 2.4.0 via `expo-build-properties`, mat
 
 ```sh
 npm ci
-npx expo install --check
 npx expo run:android
 ```
 
@@ -83,7 +84,7 @@ npx eas-cli build --platform android --profile development
 
 ### Standalone test APK (sideloaded, no Metro)
 
-Use the App Check **debug provider** for a local or sideloaded judging build; a Play Integrity registration alone is not sufficient for an APK installed outside Google Play. The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or the build computer running. Keep this debug build private. Firebase AI calls still require internet access.
+Use the App Check **debug provider** for a local or sideloaded build; a Play Integrity registration alone is not sufficient for an APK installed outside Google Play. The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or the build computer running. Keep this debug build private.
 
 After completing Firebase project setup and placing `google-services.json` in the repository root, build locally from macOS/Linux:
 
@@ -132,11 +133,12 @@ Native dependency or configuration changes require rebuilding. `npx expo prebuil
    npx expo run:android
    ```
 
-There is no Firebase AI Logic emulator; real model calls require a configured Firebase project and network access. Voice should be tested on a physical Android device as well as an emulator.
+Firebase AI Logic requests use the configured Firebase project and network connection. For voice practice, use an Android device with microphone access.
 
 ## Privacy and data
 
 - Raw microphone audio is streamed to Firebase AI Logic during a voice session; this app does not save raw audio.
+- The in-call mute control stops microphone capture; unmuting restarts it. Muted audio is not sent to the tutor.
 - The optional sentence coach runs only when tapped; its prompt includes the selected learner sentence and the learner's target language, native language, and proficiency. It prefers on-device inference; when the device/model cannot run it, the UI warns that Firebase AI Logic cloud inference will be used. Coach output is not persisted.
 - Transcripts are not persisted by default. If **Save session transcripts** is enabled, the transcript is saved with the session. Recaps, session metadata and saved phrases are otherwise the progress data stored in Firestore.
 - Before recap generation, the active transcript is held in memory. If recap generation fails, Parlino does not fabricate recap content.
@@ -144,8 +146,8 @@ There is no Firebase AI Logic emulator; real model calls require a configured Fi
 
 ## What's next for Parlino
 
-1. Expand the scenario library and language-practice options.
-2. Add reusable saved custom scenarios.
+1. Broaden language and scenario personalization.
+2. Enrich phrase review and progress insights.
 3. Continue refining the learner experience based on feedback.
 <!--
 ## Hackathon submission checklist
@@ -166,7 +168,6 @@ Pure logic tests, type checking and linting:
 npm test
 npm run typecheck
 npm run lint
-npx expo-doctor
 ```
 
 The standalone Android APK builds locally, embeds the JavaScript bundle, and can be sideloaded without Play Store or Metro. The current test build uses the debug provider, sends App Check on the Live WebSocket handshake, and only forwards microphone audio while the tutor is listening. Keep the APK private and register the device's debug token in the Firebase project configured in that build. The code passes the local test, typecheck, and lint suites.
