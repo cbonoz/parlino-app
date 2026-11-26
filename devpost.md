@@ -25,6 +25,10 @@ The goal isn’t to replace a class, tutor, or real conversation. It’s to make
 
 Parlino is an Android Expo development build written in TypeScript and React Native. Expo Router connects onboarding, practice, conversation, recap, and review.
 
+During #BuildHybridAI, we added Android Firebase AI Logic Hybrid Inference for optional sentence coaching, custom scenario creation, and an in-call microphone mute control to Parlino's existing speaking-practice app.
+
+The app can be built with your own Firebase project and configuration; setup and sideloading instructions are in the [GitHub README](https://github.com/cbonoz/parlino-app).
+
 Firebase is part of the runtime architecture:
 
 - **Firebase AI Logic** powers the current cloud Live voice tutor through React Native Firebase’s Live session API. Expo Audio captures microphone PCM, the app streams it to the session, and React Native Audio API plays the tutor’s streamed audio. A separate Firebase AI Logic text-model call creates the session recap.
@@ -61,9 +65,6 @@ We learned how Firebase AI Logic can combine private, responsive on-device infer
 
 ## What's next for Parlino
 
-Parlino is an open source app that anyone can fork or build locally with BOYK (bring your own key).
-
-Build instructions on the github here: https://github.com/cbonoz/parlino-app
 1. Expand the scenario library and language-practice options.
 2. Deepen personalization across practice and phrase review.
 3. Continue refining the learner experience based on feedback.
