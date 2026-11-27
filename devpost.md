@@ -10,7 +10,7 @@ I had a trip coming up next month and wanted to improve my Spanish. Many apps ou
 
 Studying a language and speaking it in the moment are different skills. Many learners can recognize words in a lesson but still hesitate when they need to order a meal, ask for directions, or start a conversation.
 
-We wanted to create a private, encouraging space where a learner can try, pause, make mistakes, and try again—then take that confidence into conversations with real people - and have Firebase AI power it.
+I wanted to create a private, encouraging space where a learner can try, pause, make mistakes, and try again—then take that confidence into conversations with real people - and have Firebase AI power it.
 
 ## What it does
 
@@ -28,7 +28,7 @@ The goal isn’t to replace a class, tutor, or real conversation. It’s to make
 
 ## What we built during the submission period
 
-Parlino is a net new app created entirely inside the #BuildHybridAI 2026 submission period (November 2026), with its first commit on November 15 and all feature work landing before the deadline. During the submission period we built:
+Parlino is a net new app created entirely inside the #BuildHybridAI 2026 submission period (November 2026), with its first commit on November 15 and all feature work landing before the deadline. During the submission period I built:
 
 - The full Android app: onboarding, scenario selection incl. custom scenarios, streaming voice practice, optional sentence coaching, recap, saved phrases, and spaced review.
 - Firebase Authentication (anonymous), Cloud Firestore persistence with per-user rules, and Firebase App Check.
@@ -42,7 +42,7 @@ No pre-existing Parlino code was used.
 
 Parlino is an Android Expo development build written in TypeScript and React Native. Expo Router connects onboarding, practice, conversation, recap, and review.
 
-We built Parlino during #BuildHybridAI. The app pairs Firebase AI Logic Hybrid Inference for optional sentence coaching with custom scenario creation, an in-call microphone mute control, Live voice practice, and cloud recap generation.
+I built Parlino during #BuildHybridAI. The app pairs Firebase AI Logic Hybrid Inference for optional sentence coaching with custom scenario creation, an in-call microphone mute control, Live voice practice, and cloud recap generation.
 
 The app can be built with your own Firebase project and configuration. Setup, Firebase project steps, and sideloading instructions are in the [GitHub README](https://github.com/cbonoz/parlino-app#build-and-run-android-locally-sideloaded-no-play-store). The repository is public and Apache 2.0 licensed.
 
@@ -59,11 +59,11 @@ Live voice and recap use `@react-native-firebase/ai`, while the sentence coach u
 
 ## Challenges we ran into
 
-- **Native build setup:** React Native Firebase and the audio modules require a development build rather than Expo Go. We configured Expo prebuild and EAS for Android.
-- **Android/Kotlin compatibility:** The Firebase Auth artifact was compiled with Kotlin 2.4 metadata while the generated project expected Kotlin 2.2. We aligned the Android Kotlin Gradle plugin through Expo Build Properties and generated a debug APK.
+- **Native build setup:** React Native Firebase and the audio modules require a development build rather than Expo Go. I configured Expo prebuild and EAS for Android.
+- **Android/Kotlin compatibility:** The Firebase Auth artifact was compiled with Kotlin 2.4 metadata while the generated project expected Kotlin 2.2. I aligned the Android Kotlin Gradle plugin through Expo Build Properties and generated a debug APK.
 - **Real-time audio:** Voice needs explicit microphone permission, PCM sample-rate conversion, ordered audio chunks, streamed playback, and interruption/error handling. A chat-text response is not a substitute for a real voice session.
-- **Privacy and reliability:** We kept transcripts off by default, scoped Firestore records to the authenticated UID, and made the Firebase setup state explicit instead of pretending an unconfigured session is live.
-- **Hybrid inference:** We integrated Firebase AI Logic's native Android SDK into the Expo and React Native app through a small Kotlin Expo module. The sentence coach stays separate from Live voice and recap, and its failure cannot interrupt or discard a practice session.
+- **Privacy and reliability:** I kept transcripts off by default, scoped Firestore records to the authenticated UID, and made the Firebase setup state explicit instead of pretending an unconfigured session is live.
+- **Hybrid inference:** I integrated Firebase AI Logic's native Android SDK into the Expo and React Native app through a small Kotlin Expo module. The sentence coach stays separate from Live voice and recap, and its failure cannot interrupt or discard a practice session.
 
 ## Accomplishments that we're proud of
 
@@ -79,7 +79,7 @@ Live voice and recap use `@react-native-firebase/ai`, while the sentence coach u
 
 Speaking confidence is its own product problem: learners need room to practice, not only more vocabulary or grammar content. A small, relevant scenario can make practice feel more approachable than an open-ended chatbot.
 
-We learned how Firebase AI Logic can combine private, responsive on-device inference with the reach of cloud models, and how to make the active inference route visible to learners. Integrating App Check, native Android code, and streaming audio made reliability and privacy part of the product experience, not just implementation details.
+I learned how Firebase AI Logic can combine private, responsive on-device inference with the reach of cloud models, and how to make the active inference route visible to learners. Integrating App Check, native Android code, and streaming audio made reliability and privacy part of the product experience, not just implementation details.
 
 ## What's next for Parlino
 
