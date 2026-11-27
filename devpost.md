@@ -1,5 +1,8 @@
 # Parlino — Devpost draft
 
+**Platform:** Android (Best Android App)
+**Repository:** [github.com/cbonoz/parlino-app](https://github.com/cbonoz/parlino-app) — public, Apache 2.0
+
 
 ## Inspiration
 
@@ -21,13 +24,27 @@ After a completed learner turn, the learner can optionally tap **Coach this sent
 
 The goal isn’t to replace a class, tutor, or real conversation. It’s to make the first few speaking attempts feel accessible—wherever the learner is and before they feel ready to speak in public.
 
+**Value proposition:** Parlino turns a few spare minutes into low-pressure speaking practice for learners who freeze in real conversations. It is private by default, works at the learner's level, keeps corrections gentle and optional, and runs on the phone they already carry. Unlike vocabulary drills, every session is a spoken exchange the learner can repeat until they feel ready to use it with a real person.
+
+## What we built during the submission period
+
+Parlino is a net new app created entirely inside the #BuildHybridAI 2026 submission period (November 2026), with its first commit on November 15 and all feature work landing before the deadline. During the submission period we built:
+
+- The full Android app: onboarding, scenario selection incl. custom scenarios, streaming voice practice, optional sentence coaching, recap, saved phrases, and spaced review.
+- Firebase Authentication (anonymous), Cloud Firestore persistence with per-user rules, and Firebase App Check.
+- A Firebase AI Logic Live voice session with real microphone capture and streamed playback.
+- A Firebase AI Logic Hybrid Inference sentence coach through a small Kotlin Expo module, with inference-source reporting, cloud-use disclosure, and a cloud retry.
+- Tests, typecheck and lint coverage, plus setup docs, screenshots, and a sideloadable standalone build.
+
+No pre-existing Parlino code was used.
+
 ## How we built it
 
 Parlino is an Android Expo development build written in TypeScript and React Native. Expo Router connects onboarding, practice, conversation, recap, and review.
 
-During #BuildHybridAI, we added Android Firebase AI Logic Hybrid Inference for optional sentence coaching, custom scenario creation, and an in-call microphone mute control to Parlino's existing speaking-practice app.
+We built Parlino during #BuildHybridAI. The app pairs Firebase AI Logic Hybrid Inference for optional sentence coaching with custom scenario creation, an in-call microphone mute control, Live voice practice, and cloud recap generation.
 
-The app can be built with your own Firebase project and configuration; setup and sideloading instructions are in the [GitHub README](https://github.com/cbonoz/parlino-app).
+The app can be built with your own Firebase project and configuration. Setup, Firebase project steps, and sideloading instructions are in the [GitHub README](https://github.com/cbonoz/parlino-app#build-and-run-android-locally-sideloaded-no-play-store). The repository is public and Apache 2.0 licensed.
 
 Firebase is part of the runtime architecture:
 
@@ -56,6 +73,7 @@ Live voice and recap use `@react-native-firebase/ai`, while the sentence coach u
 - Made guest-first Firebase Authentication and per-user Firestore persistence part of the app architecture.
 - Added Firestore ownership rules, App Check configuration, transcript opt-in, and pure-logic tests for recap parsing, review scheduling, and validation.
 - Generated a signed Android development APK and kept Firebase client configuration and generated build artifacts out of the Git source tree.
+- Published the source as a public, Apache 2.0 licensed repository with end-to-end build and Firebase setup instructions, so judges can build and run it with their own Firebase project.
 
 ## What we learned
 

@@ -2,13 +2,13 @@
 
 **Your AI partner for speaking a new language.**
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 Parlino helps language learners build confidence through short, level-aware speaking practice: choose an everyday or custom scenario, talk with an AI tutor, optionally get hybrid AI feedback on a sentence, then keep useful phrases for review.
 
 The selected Android launcher mark is concept 3 in `images/concepts/`; concepts 1 and 2 are preserved there as alternatives. The app icon uses the concept 3 full-color mark plus adaptive and monochrome layers.
 
-Built for the <a href="https://firebasehybridaihackathon.devpost.com">Firebase Hybrid 26</a> hackathon.
-
-https://console.firebase.google.com/project/parlino-1/overview
+A net new app built during the **#BuildHybridAI 2026** submission period for the <a href="https://firebasehybridaihackathon.devpost.com">Firebase Hybrid 26</a> hackathon. The repository is licensed under [Apache 2.0](LICENSE).
 
 ## #BuildHybridAI 2026
 
@@ -171,6 +171,19 @@ npm run lint
 ```
 
 The standalone Android APK builds locally, embeds the JavaScript bundle, and can be sideloaded without Play Store or Metro. The current test build uses the debug provider, sends App Check on the Live WebSocket handshake, and only forwards microphone audio while the tutor is listening. Keep the APK private and register the device's debug token in the Firebase project configured in that build. The code passes the local test, typecheck, and lint suites.
+
+## Judging and testing
+
+Parlino is an Android app, so testing uses a local or sideloaded build rather than a hosted URL:
+
+1. Follow [Firebase project setup](#firebase-project-setup) with your own Firebase project and Android app ID `com.parlino.app`, then build with the steps in [Build and run Android locally](#build-and-run-android-locally-sideloaded-no-play-store). No production keys or project secrets are committed, so a judge's own Firebase project is expected.
+2. Sign in anonymously, choose a scenario, and start a voice session. A physical Android device with a microphone is required; an emulator can exercise the UI but not a realistic voice session.
+3. Tap **Coach this sentence** after a learner turn to exercise the Firebase AI Logic Hybrid Inference path. On devices without Gemini Nano 4, the module reports why it cannot run locally, the UI discloses cloud inference, and the coach falls back to cloud.
+4. Screenshots from the installed build and the demo video show the same flow without any setup.
+
+## License
+
+Parlino is released under the [Apache License 2.0](LICENSE).
 
 ## References
 
