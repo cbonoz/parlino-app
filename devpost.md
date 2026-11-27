@@ -6,7 +6,7 @@
 
 ## Inspiration
 
-I had a trip coming up next month and wanted to improve my Spanish. Many apps out there are good for improving vocabulary, but without a conversational focus, learning can often fall flat.
+I had a trip coming up next month and wanted to improve my Spanish. The apps I tried were good at teaching words. The trouble started when someone asked a follow-up question I hadn’t rehearsed.
 
 Studying a language and speaking it in the moment are different skills. Many learners can recognize words in a lesson but still hesitate when they need to order a meal, ask for directions, or start a conversation.
 
@@ -24,7 +24,32 @@ After a completed learner turn, the learner can optionally tap **Coach this sent
 
 The goal isn’t to replace a class, tutor, or real conversation. It’s to make the first few speaking attempts feel accessible—wherever the learner is and before they feel ready to speak in public.
 
-**Value proposition:** Parlino turns a few spare minutes into low-pressure speaking practice for learners who freeze in real conversations. It is private by default, works at the learner's level, keeps corrections gentle and optional, and runs on the phone they already carry. Unlike vocabulary drills, every session is a spoken exchange the learner can repeat until they feel ready to use it with a real person.
+**Value proposition:** Parlino turns a few spare minutes into low-pressure speaking practice for learners who freeze in real conversations. It is guest-first, keeps transcripts off unless you opt in, adapts to the learner’s level, and makes correction optional. Unlike a lesson path, every session starts with the moment the learner is actually facing—and can be repeated until it feels ordinary.
+
+## Why not just Duolingo or Babbel?
+
+Duolingo and Babbel are the obvious comparisons. Both are good at getting learners to the starting line: Duolingo’s path and streaks make daily practice stick, and Duolingo Max’s Video Call with Lily lets you speak with an AI character. Babbel pairs structured lessons with speech recognition, guided AI conversation scenarios in Babbel Speak, and live classes with teachers. Voice-first apps such as Speak and Loora go further and put speaking at the center.
+
+So the gap isn’t “no one does voice.” The gap is what the voice practice is organized around.
+
+1. **The app chooses the conversation.** Curriculum apps optimize for the next lesson, and their conversation features follow that structure—a character, a unit, an expert-written scenario. That is valuable, but it does not let me rehearse the exact moment I am worried about: the café order with an unexpected follow-up, the work standup, the call to a landlord.
+2. **Recognition is not retrieval.** Vocabulary drills ask me to recognize or recall a known item. A real conversation asks me to retrieve words while someone waits, listen to a reply I did not predict, and repair the sentence when it comes out wrong. Those are different skills, and they need a different loop.
+3. **Guided scenarios can become scripts.** Expert-designed dialogues are safe and well sequenced, but if I already know the prompts, I am rehearsing the script rather than the improvisation. The unpredictable follow-up is the hard part.
+4. **Feedback timing is a design choice.** Immediate correction is great for a drill and terrible for a beginner trying to finish a thought. Post-session review is gentler, but it is usually the only feedback path, and it is shaped by the app’s scenario. Parlino defers correction by default, then lets the learner ask for one targeted sentence tip while the conversation is still open—without interrupting it.
+5. **Engagement is not confidence.** Streaks and XP measure whether I came back, not whether I can order dinner without switching to English. A learner can be “advanced” in an app and still freeze in public.
+6. **The most advanced conversation features are premium and cloud-first.** Duolingo Max and Babbel’s conversation features sit behind paid tiers. The AI is remote, and it is rarely obvious which model or route handled a sentence. Parlino is guest-first, keeps transcripts off by default, and shows when a coaching tip came from the device or the cloud.
+
+**What Parlino is not:** a curriculum, a replacement for Duolingo or Babbel, a human tutor, or a pronunciation scorer. It has far less content and a much smaller scenario library. It is the five-minute rehearsal space between a lesson and a real conversation: choose the moment, speak it through, get one useful note, and go.
+
+### How the loops differ
+
+- **Duolingo Max:** lesson path plus AI video calls with Lily; cloud AI; account and paid Max tier; broad curriculum.
+- **Babbel:** structured lessons, Babbel Speak’s guided AI scenarios, and live classes; cloud AI; subscription; broad curriculum.
+- **Parlino:** one short spoken scenario chosen by the learner, including custom situations; hybrid inference with on-device coaching preferred and the route shown; anonymous guest; narrow, Spanish-first speaking rehearsal.
+
+That is the wedge: not a better course, a smaller, braver first step. For a learner with a trip next month, the win is not a 30-day streak—it is ordering without rehearsing in English first. The technical bet is equally specific: one Firebase AI Logic SDK can choose the right route for each request, and show the learner which route it chose.
+
+*Feature comparisons based on Duolingo’s [Max help page](https://www.duolingo.com/help/what-is-duolingo-max) and [Video Call overview](https://blog.duolingo.com/video-call), [Babbel Speak](https://www.babbel.com/babbel-conversation-practice), and the public product pages for [Speak](https://speak.com) and [Loora](https://www.loora.com).*
 
 ## What we built during the submission period
 
@@ -78,6 +103,8 @@ Live voice and recap use `@react-native-firebase/ai`, while the sentence coach u
 ## What we learned
 
 Speaking confidence is its own product problem: learners need room to practice, not only more vocabulary or grammar content. A small, relevant scenario can make practice feel more approachable than an open-ended chatbot.
+
+The hardest product decision was when to stay quiet. A tutor that corrects every sentence looks impressive in a demo and feels awful when you are trying to finish a thought. Deferring correction—and making the single-sentence coach optional—made the conversation feel safer than a more “helpful” version would have.
 
 I learned how Firebase AI Logic can combine private, responsive on-device inference with the reach of cloud models, and how to make the active inference route visible to learners. Integrating App Check, native Android code, and streaming audio made reliability and privacy part of the product experience, not just implementation details.
 
