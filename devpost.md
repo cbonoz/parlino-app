@@ -63,7 +63,9 @@ Setup and sideloading are in the [GitHub README](https://github.com/cbonoz/parli
 
 ## What we learned
 
-Confidence is a separate skill from vocabulary. The hardest design decision was knowing when not to correct: a tutor that interrupts every sentence looks impressive in a demo but makes it harder to finish a thought. Deferring feedback—and making the one-sentence coach optional—made practice feel safer. Firebase AI Logic made that trade-off concrete: on-device inference is fast and keeps a sentence local, cloud inference adds reach, and the app shows which route answered.
+Confidence in speaking is a separate skill from vocabulary, and building a product that supports it is a separate skill from building the app itself. The hardest product decision was knowing when not to correct: a tutor that interrupts every sentence looks impressive in a demo but makes it harder to finish a thought. Deferring feedback—and making the one-sentence coach optional—made practice feel safer.
+
+On the engineering side, the hardest part was treating audio as a live stream instead of a text prompt. The Live AI socket streams 16 kHz PCM from the microphone in ordered chunks while the tutor listens, then plays back streamed speech. That loop is what makes Parlino feel like a conversation; a chat-style request/response would have been easier and much less useful. Firebase AI Logic also made the on-device/cloud trade-off concrete: on-device inference is fast and keeps a sentence local, cloud inference adds reach, and the app shows which route answered.
 
 ## What's next for Parlino
 
