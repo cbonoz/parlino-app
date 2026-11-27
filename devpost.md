@@ -63,10 +63,14 @@ Setup and sideloading are in the [GitHub README](https://github.com/cbonoz/parli
 
 ## What we learned
 
-Speaking confidence is its own product problem. The hardest decision was when to stay quiet—a tutor that corrects every sentence demos well and feels awful when you are trying to finish a thought. Firebase AI Logic also showed how on-device privacy and cloud reach can coexist, if the app is honest about which route answered.
+Confidence is a separate skill from vocabulary. The hardest design decision was knowing when not to correct: a tutor that interrupts every sentence looks impressive in a demo but makes it harder to finish a thought. Deferring feedback—and making the one-sentence coach optional—made practice feel safer. Firebase AI Logic made that trade-off concrete: on-device inference is fast and keeps a sentence local, cloud inference adds reach, and the app shows which route answered.
 
 ## What's next for Parlino
 
 1. Expand the scenario library and language options.
 2. Deepen personalization across practice and review.
 3. Keep refining the experience with learner feedback.
+
+Demo video (public 11/29): https://www.youtube.com/watch?v=zjzzUnLpjOo
+
+This was a fun project to build!
