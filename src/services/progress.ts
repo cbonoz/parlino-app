@@ -33,12 +33,21 @@ export async function loadSettings(): Promise<LearnerSettings> {
   }
 }
 
-export async function saveSettings(settings: LearnerSettings): Promise<void> {
+export type SettingsSaveResult = { synced: boolean; error?: unknown };
+
+export async function saveSettings(settings: LearnerSettings): Promise<SettingsSaveResult> {
   await setLocalSettings(settings);
-  if (!getFirebaseSetup().ready) return;
-  prepareAppCheck();
-  const uid = await ensureAnonymousUser();
-  if (uid) await setDoc(doc(getFirestore(), 'users', uid, 'settings', 'profile'), settings, { merge: true });
+  if (!getFirebaseSetup().ready) return { synced: false };
+  try {
+    prepareAppCheck();
+    const uid = await ensureAnonymousUser();
+    if (!uid) return { synced: false };
+    await setDoc(doc(getFirestore(), 'users', uid, 'settings', 'profile'), settings, { merge: true });
+    return { synced: true };
+  } catch (error) {
+    console.warn('[Settings] Firebase sync failed.', error);
+    return { synced: false, error };
+  }
 }
 
 export async function loadSessions(): Promise<SessionRecord[]> {

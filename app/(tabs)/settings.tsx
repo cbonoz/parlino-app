@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Card, Eyebrow, Screen } from '@/components/ui';
 import { DEFAULT_SETTINGS, type LearnerSettings } from '@/domain/types';
+import { describeFirebaseSyncError } from '@/domain/firebaseErrors';
 import { getFirebaseSetup } from '@/services/firebase';
 import { loadSettings, saveSettings } from '@/services/progress';
 import { colors, radius } from '@/theme';
@@ -20,9 +21,15 @@ export default function SettingsScreen() {
   async function toggleTranscript(value: boolean) {
     const updated = { ...settings, saveTranscripts: value };
     setSettings(updated); setSaving(true);
-    try { await saveSettings(updated); }
-    catch { Alert.alert('Could not sync this setting', 'It is saved on this device and will sync when Firebase is available.'); }
-    finally { setSaving(false); }
+    try {
+      const result = await saveSettings(updated);
+      if (!result.synced && getFirebaseSetup().ready) {
+        Alert.alert('Saved on this device', `Firebase couldn't sync this setting. ${describeFirebaseSyncError(result.error)}`);
+      }
+    } catch (error) {
+      console.warn('[Settings] Could not save the transcript setting.', error);
+      Alert.alert('Could not save this setting', 'Parlino could not save this setting on this device.');
+    } finally { setSaving(false); }
   }
 
   return (
@@ -44,8 +51,8 @@ export default function SettingsScreen() {
 
       <View style={{ gap: 11 }}><Text style={styles.sectionTitle}>Voice practice setup</Text>
         <Card style={styles.setupCard}>
-          <View style={styles.setupStatus}><View style={[styles.statusDot, { backgroundColor: setup.ready ? colors.green : colors.gold }]} /><Text style={styles.setupStatusText}>{setup.ready ? 'Firebase connected' : 'Firebase not connected'}</Text></View>
-          <Text style={styles.setupCopy}>{setup.ready ? 'Your app can use Firebase services. Enable Anonymous sign-in, Firestore and AI Logic in the Firebase console.' : 'To start a real Gemini Live voice session, add the Firebase native files and rebuild this app. No demo or simulated responses are used.'}</Text>
+          <View style={styles.setupStatus}><View style={[styles.statusDot, { backgroundColor: setup.ready ? colors.green : colors.gold }]} /><Text style={styles.setupStatusText}>{setup.ready ? 'Firebase configured' : 'Firebase not configured'}</Text></View>
+          <Text style={styles.setupCopy}>{setup.ready ? 'Native config detected. Sync also needs Anonymous Auth, Firestore and AI Logic enabled in the Firebase console.' : 'To start a real Gemini Live voice session, add the Firebase native files and rebuild this app. No demo or simulated responses are used.'}</Text>
           <View style={styles.setupDivider} />
           <Text style={styles.setupStep}>1  Add google-services.json to the project root</Text>
           <Text style={styles.setupStep}>2  Enable Anonymous Auth, Firestore, AI Logic and App Check</Text>

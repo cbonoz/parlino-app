@@ -2,7 +2,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Card, Eyebrow, PrimaryButton, Screen, Tag } from '@/components/ui';
+import { describeFirebaseSyncError } from '@/domain/firebaseErrors';
 import { DEFAULT_SETTINGS, type LearnerSettings, type Proficiency } from '@/domain/types';
+import { getFirebaseSetup } from '@/services/firebase';
 import { saveSettings } from '@/services/progress';
 import { colors, radius } from '@/theme';
 
@@ -24,10 +26,17 @@ export default function OnboardingScreen() {
     }
     setSaving(true);
     try {
-      await saveSettings({ ...settings, onboardingComplete: true });
+      const result = await saveSettings({ ...settings, onboardingComplete: true });
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Saved on this device', 'Firebase is not connected yet, but your preferences are ready to use here.');
+      if (!result.synced && getFirebaseSetup().ready) {
+        Alert.alert(
+          'Saved on this device',
+          `Your preferences are ready here, but Firebase couldn't sync them. ${describeFirebaseSyncError(result.error)}`,
+        );
+      }
+    } catch (error) {
+      console.warn('[Onboarding] Could not save preferences on this device.', error);
+      Alert.alert('Could not save your preferences', 'Parlino could not save these settings on this device. Try again.');
       router.replace('/(tabs)');
     } finally { setSaving(false); }
   }
