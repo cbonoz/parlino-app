@@ -10,3 +10,9 @@ export function nextReviewAt(reviewCount: number, from = Date.now()): number {
 export function isDue(dueAt: number, now = Date.now()): boolean {
   return Number.isFinite(dueAt) && dueAt <= now;
 }
+
+/** Whole days until a phrase is due, rounded up, with a minimum of one. */
+export function daysUntil(dueAt: number, now = Date.now()): number {
+  if (!Number.isFinite(dueAt) || !Number.isFinite(now)) return 1;
+  return Math.max(1, Math.ceil((dueAt - now) / (24 * 60 * 60 * 1000)));
+}

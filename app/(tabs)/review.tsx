@@ -2,7 +2,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Eyebrow, Screen } from '@/components/ui';
-import { isDue } from '@/domain/reviewSchedule';
+import { daysUntil, isDue } from '@/domain/reviewSchedule';
 import type { SavedPhrase, SessionRecord } from '@/domain/types';
 import { loadSavedPhrases, loadSessions, markPhraseReviewed } from '@/services/progress';
 import { colors, radius } from '@/theme';
@@ -53,8 +53,9 @@ export default function ReviewScreen() {
 }
 
 function PhraseCard({ phrase, onDone, compact = false, now }: { phrase: SavedPhrase; onDone?: () => void; compact?: boolean; now: number }) {
+  const days = daysUntil(phrase.dueAt, now);
   return <Card style={[styles.phraseCard, compact && styles.phraseCompact]}>
-    <View style={styles.phraseTop}><Text style={styles.phraseLabel}>SAY IT AGAIN</Text>{compact ? <Text style={styles.dueDate}>In {Math.max(1, Math.ceil((phrase.dueAt - now) / 86_400_000))} days</Text> : <Text style={styles.reviewIndex}>REVIEW {phrase.reviewCount + 1}</Text>}</View>
+    <View style={styles.phraseTop}><Text style={styles.phraseLabel}>SAY IT AGAIN</Text>{compact ? <Text style={styles.dueDate}>In {days} {days === 1 ? 'day' : 'days'}</Text> : <Text style={styles.reviewIndex}>REVIEW {phrase.reviewCount + 1}</Text>}</View>
     <Text style={styles.phrase}>{phrase.phrase}</Text><Text style={styles.translation}>{phrase.translation}</Text>
     {phrase.note ? <Text style={styles.phraseNote}>{phrase.note}</Text> : null}
     {onDone ? <Pressable onPress={onDone} style={({ pressed }) => [styles.doneButton, pressed && { opacity: 0.75 }]}><Text style={styles.doneText}>I remembered it <Text style={{ fontSize: 16 }}>→</Text></Text></Pressable> : null}
