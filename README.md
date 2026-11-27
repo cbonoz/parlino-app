@@ -10,6 +10,8 @@ The selected Android launcher mark is concept 3 in `images/concepts/`; concepts 
 
 A net new app built during the **#BuildHybridAI 2026** submission period for the <a href="https://firebasehybridaihackathon.devpost.com">Firebase Hybrid 26</a> hackathon. The repository is licensed under [Apache 2.0](LICENSE).
 
+Demo video: https://www.youtube.com/watch?v=zjzzUnLpjOo
+
 ## #BuildHybridAI 2026
 
 Parlino is being built for the **Android** track of [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/). The product focuses on a practical language-learning problem: learners often know vocabulary but have few low-pressure chances to say it out loud.
@@ -47,7 +49,7 @@ No provider API key or service-account credential is bundled in the app. The Fir
 
 - `google-services.json`, `.env*`, Firebase CLI logs/cache, service-account key files, `PROMPT.md`, generated Android sources/build products and `dist/` are excluded from Git.
 - `.easignore` intentionally allows the local `google-services.json` into protected EAS build uploads; it remains excluded from the public source repository.
-- The debug APK is a local build artifact and is not committed. Never commit an App Check debug token or Android signing keystore.
+- APKs are published as GitHub Release assets and are not committed; `*.apk` and `*.aab` are ignored. Never commit an App Check debug token or Android signing keystore. The judge demo token is injected at build time.
 - The tracked `patches/` file is an intentional `patch-package` patch for React Native Firebase AI 27.1.1. `npm ci` applies it automatically; do not remove it unless the dependency is upgraded and the Live WebSocket App Check header behavior is verified.
 
 ## Build and run Android locally (sideloaded; no Play Store)
@@ -84,7 +86,7 @@ npx eas-cli build --platform android --profile development
 
 ### Standalone test APK (sideloaded, no Metro)
 
-Use the App Check **debug provider** for a local or sideloaded build; a Play Integrity registration alone is not sufficient for an APK installed outside Google Play. The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or the build computer running. Keep this debug build private.
+Use the App Check **debug provider** for a local or sideloaded build; a Play Integrity registration alone is not sufficient for an APK installed outside Google Play. The `standalone-test` profile embeds the JavaScript bundle, so the installed APK does not need Metro or the build computer running. Keep debug tokens private; the published demo build uses a dedicated token that is revoked after judging.
 
 After completing Firebase project setup and placing `google-services.json` in the repository root, build locally from macOS/Linux:
 
@@ -105,6 +107,21 @@ adb shell monkey -p com.parlino.app 1
 
 The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. To build with EAS instead, run `npx eas-cli build --platform android --profile standalone-test`; the profile sets the debug-provider flags.
 
+### Judge demo APK (fixed App Check token, arm64)
+
+The published demo APK uses one dedicated App Check debug token, so judges do not have to register their own device token. Build it only with a token registered for that judge build, and revoke the token after judging.
+
+```sh
+TOKEN="<registered debug token>"
+PARLINO_APP_CHECK_PROVIDER=debug EXPO_PUBLIC_APP_CHECK_DEBUG=true \
+EXPO_PUBLIC_APP_CHECK_DEBUG_TOKEN="$TOKEN" \
+  ./android/gradlew -p android assembleRelease \
+  -PreactNativeArchitectures=arm64-v8a \
+  -Pexpo.useLegacyPackaging=true
+```
+
+`-PreactNativeArchitectures=arm64-v8a` produces a single-ABI APK for modern phones (about 19 MB instead of 104 MB). `-Pexpo.useLegacyPackaging=true` compresses the native libraries; Android extracts them at install time. Omit both flags for a universal APK that also covers 32-bit devices and emulators. The token is embedded in the APK, so treat that artifact as a test build and revoke the token when judging ends.
+
 Each device needs an App Check debug token registered for the exact Android app in the Firebase project used by that build. To view a token on a test device, start a log stream, then force-stop and reopen Parlino:
 
 ```sh
@@ -114,7 +131,7 @@ adb shell am force-stop com.parlino.app
 adb shell monkey -p com.parlino.app 1
 ```
 
-Register the displayed token in **Firebase Console → App Check → Apps → Parlino (`com.parlino.app`) → Manage debug tokens**. A judge using their own Firebase project must use that project's `google-services.json` and register their own device token there. If using a shared project, the project owner must add each judge's token privately. **Do not put debug tokens in source control, Devpost, or public issue comments.**
+Register the displayed token in **Firebase Console → App Check → Apps → Parlino (`com.parlino.app`) → Manage debug tokens**. A judge using their own Firebase project must use that project's `google-services.json` and register their own device token there. The published demo APK uses a single dedicated token registered for judging, so it does not require each judge to register a device. Revoke that token after the judging period. **Do not put debug tokens in source control or public issue comments; inject the demo token at build time and keep only the built APK.**
 
 Native dependency or configuration changes require rebuilding. `npx expo prebuild --clean` regenerates the Android native project and overwrites generated native files; inspect any native edits before running it.
 

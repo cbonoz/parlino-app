@@ -17,6 +17,9 @@ firestore-debug.log
 ui-debug.log
 *service-account*.json
 serviceAccount*.json
+*.apk
+*.aab
+.DS_Store
 
 PROMPT.md
 SCRIPT.md

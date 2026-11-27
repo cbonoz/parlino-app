@@ -36,11 +36,15 @@ export function prepareAppCheck(): AppCheck {
     __DEV__ ||
     process.env.EXPO_PUBLIC_APP_CHECK_DEBUG === 'true' ||
     Constants.expoConfig?.extra?.appCheckProvider === 'debug';
+  const debugToken = process.env.EXPO_PUBLIC_APP_CHECK_DEBUG_TOKEN;
   if (useDebugProvider) {
     console.info('[AppCheck] Debug provider enabled for this test build.');
   }
   provider.configure({
-    android: { provider: useDebugProvider ? 'debug' : 'playIntegrity' },
+    android: {
+      provider: useDebugProvider ? 'debug' : 'playIntegrity',
+      ...(useDebugProvider && debugToken ? { debugToken } : {}),
+    },
   });
   appCheckInstance = initializeAppCheck(getApp(), { provider, isTokenAutoRefreshEnabled: true });
   return appCheckInstance;
